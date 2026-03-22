@@ -584,7 +584,7 @@ async function loadLecaps() {
     const liveCount = items.filter(i => i.live).length;
     if (source) {
       if (hasLive) {
-        source.textContent = `Fuente: BYMA (en vivo) — ${liveCount} tickers en vivo, ${items.length - liveCount} con último precio conocido`;
+        source.textContent = `Fuente: data912 (en vivo) — ${liveCount} tickers en vivo, ${items.length - liveCount} con último precio conocido`;
       } else {
         source.textContent = `Fuente: ${lecaps.fuente} — Actualizado: ${lecaps.actualizado}`;
       }

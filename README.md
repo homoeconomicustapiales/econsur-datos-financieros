@@ -14,10 +14,10 @@ Live en [rendimientos.co](https://rendimientos.co)
 | Seccion | Fuente | Actualizacion |
 |---------|--------|---------------|
 | Billeteras | Manual en `config.json` | Manual |
-| FCIs | [ArgentinaDatos API](https://argentinadatos.com) via CAFCI | En vivo |
-| Plazo Fijo | [ArgentinaDatos API](https://argentinadatos.com) | En vivo |
-| LECAPs | [BYMA API](https://open.bymadata.com.ar) via Netlify function proxy | En vivo (7/14 tickers) |
-| BONCAPs | Manual en `config.json` (no disponibles en API gratuita BYMA) | Manual |
+| FCIs | [ArgentinaDatos API](https://api.argentinadatos.com) via CAFCI | En vivo |
+| Plazo Fijo | [ArgentinaDatos API](https://api.argentinadatos.com/v1/finanzas/tasas/plazoFijo) | En vivo |
+| LECAPs | [data912.com](https://data912.com/live/arg_notes) via Netlify function | En vivo |
+| BONCAPs | [data912.com](https://data912.com/live/arg_bonds) via Netlify function | En vivo |
 
 ## Estructura
 
@@ -25,14 +25,13 @@ Live en [rendimientos.co](https://rendimientos.co)
 public/              Frontend estatico
   index.html         Pagina principal (3 tabs: Billeteras, Plazo Fijo, LECAPs)
   app.js             Logica del frontend
-  config.json        Datos de billeteras, FCIs, LECAPs (precios manuales)
+  config.json        Datos de billeteras y FCIs + config LECAPs (pago final, vencimiento)
   styles.css         Estilos + dark mode
   comparar.html      Comparador de fondos
 server.js            Servidor local Express (dev)
-update_lecaps.js     Script para actualizar precios LECAP desde BYMA
 netlify/functions/
   cafci.js           Proxy ArgentinaDatos para FCIs
-  lecaps.js          Proxy BYMA para precios de LECAPs en vivo
+  lecaps.js          Proxy data912 para precios de LECAPs y BONCAPs en vivo
 netlify.toml         Config de deploy y redirects
 ```
 
@@ -50,25 +49,16 @@ npm start
 |------|-------------|
 | `GET /api/config` | Config con billeteras, FCIs y LECAPs |
 | `GET /api/fci` | FCIs con TNA calculada (proxy ArgentinaDatos) |
-| `GET /api/lecaps` | Precios LECAP en vivo (proxy BYMA) |
+| `GET /api/lecaps` | Precios LECAP/BONCAP en vivo (proxy data912) |
 | `GET /api/cafci/ficha/:fondoId/:claseId` | Ficha tecnica de fondo (proxy CAFCI) |
 
-## LECAPs: como funciona
+## LECAPs y BONCAPs: como funciona
 
-1. El frontend llama a `/api/lecaps` que proxea la API gratuita de BYMA (`/lebacs`)
-2. BYMA devuelve precios T+1 con 20min de delay — se usa el ultimo operado (`trade`)
-3. Los tickers que no estan en la API gratuita (BONCAPs) usan precios de `config.json`
+1. El frontend llama a `/api/lecaps` que consulta data912.com en vivo
+2. data912 devuelve precios de mercado — se usa el ultimo operado (`c`)
+3. LECAPs desde `/live/arg_notes`, BONCAPs desde `/live/arg_bonds`
 4. Se calcula TIR y TNA desde la fecha de liquidacion (T+1 dia habil, saltando feriados AR)
-
-Para actualizar precios manualmente:
-
-```bash
-# Actualiza los 7 tickers disponibles en BYMA
-NODE_TLS_REJECT_UNAUTHORIZED=0 node update_lecaps.js
-
-# Dry run (no escribe)
-NODE_TLS_REJECT_UNAUTHORIZED=0 node update_lecaps.js --dry-run
-```
+5. El pago final y fecha de vencimiento de cada letra estan en `config.json`
 
 ## Deploy
 

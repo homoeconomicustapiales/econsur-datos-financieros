@@ -780,5 +780,20 @@ body {
   .rate-value { font-size: 1rem; }
   .admin-table { font-size: 0.75rem; }
   .admin-table th, .admin-table td { padding: 8px 10px; }
+  /* LECAP table mobile */
+  .lecap-table { table-layout: auto; font-size: 0.68rem; }
+  .lecap-table th { padding: 8px 8px; font-size: 0.6rem; }
+  .lecap-table td { padding: 7px 8px; }
+  .lecap-table .col-ticker { width: auto; }
+  .lecap-table .col-precio { width: auto; }
+  .lecap-table .col-pago { width: auto; }
+  .lecap-table .col-dias { width: auto; }
+  .lecap-table .col-vto { display: none; }
+  .lecap-table .col-tna { display: none; }
+  .lecap-table .col-tir { width: auto; }
+  .lecap-table td:nth-child(5) { display: none; }
+  .lecap-table td:nth-child(6) { display: none; }
+  .lecap-type-badge { font-size: 0.5rem; padding: 1px 4px; margin-left: 4px; }
+  .scatter-plot { height: 280px; }
   .footer { padding: 24px 16px 40px; }
 }
