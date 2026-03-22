@@ -121,9 +121,9 @@ app.get('/api/lecaps', async (req, res) => {
     const result = [];
     for (const item of (data.data || [])) {
       if (item.settlementType !== '2') continue;
-      const offer = parseFloat(item.offerPrice) || 0;
+      const trade = parseFloat(item.trade) || 0;
       const close = parseFloat(item.closingPrice) || 0;
-      const price = offer > 0 ? offer : close;
+      const price = trade > 0 ? trade : close;
       if (price <= 0) continue;
       result.push({ symbol: item.symbol, price, offer, bid: parseFloat(item.bidPrice) || 0, close, trade: parseFloat(item.trade) || 0, maturityDate: item.maturityDate, daysToMaturity: item.daysToMaturity });
     }
@@ -131,6 +131,39 @@ app.get('/api/lecaps', async (req, res) => {
   } catch (err) {
     console.error('BYMA proxy error:', err.message);
     res.status(502).json({ error: 'Failed to fetch BYMA data' });
+  }
+});
+
+// --- CEDEAR Arbitrage (data912 proxy) ---
+
+app.get('/api/cedears', async (req, res) => {
+  try {
+    const [cedears, ccl] = await Promise.all([
+      fetch('https://data912.com/live/arg_cedears').then(r => r.json()),
+      fetch('https://data912.com/live/ccl').then(r => r.json()),
+    ]);
+    const cedearPrices = {};
+    for (const c of cedears) {
+      if (c.c > 0) cedearPrices[c.symbol] = { price: c.c, bid: c.px_bid || 0, ask: c.px_ask || 0, volume: c.v || 0, pct_change: c.pct_change || 0 };
+    }
+    const result = [];
+    for (const item of ccl) {
+      const sym = item.ticker_usa;
+      const symAr = item.ticker_ar;
+      const cclMark = parseFloat(item.CCL_mark) || 0;
+      if (cclMark <= 0) continue;
+      const cedear = cedearPrices[symAr] || cedearPrices[sym];
+      if (!cedear) continue;
+      result.push({ symbol: sym, ticker_ar: symAr, cedear_price: cedear.price, ccl_implicit: cclMark, ccl_bid: parseFloat(item.CCL_bid) || 0, ccl_ask: parseFloat(item.CCL_ask) || 0, volume: cedear.volume, ars_volume: parseFloat(item.ars_volume) || 0, pct_change: cedear.pct_change, arg_panel: item.arg_panel, usa_panel: item.usa_panel });
+    }
+    const sorted = [...result].sort((a, b) => b.ars_volume - a.ars_volume);
+    const top10 = sorted.slice(0, 10).map(x => x.ccl_implicit).sort((a, b) => a - b);
+    const mid = Math.floor(top10.length / 2);
+    const cclRef = top10.length % 2 === 0 ? (top10[mid - 1] + top10[mid]) / 2 : top10[mid];
+    res.json({ data: result, ccl_reference: cclRef, source: 'data912' });
+  } catch (err) {
+    console.error('CEDEAR proxy error:', err.message);
+    res.status(502).json({ error: 'Failed to fetch CEDEAR data' });
   }
 });
 

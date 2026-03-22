@@ -215,22 +215,1062 @@
     "fuente": "BYMA",
     "actualizado": "21/03/2026",
     "letras": [
-      { "ticker": "S17A6", "nombre": "LECAP Abril 17", "pago_final": 110.125, "precio": 108.400, "fecha_vencimiento": "2026-04-17", "activo": true },
-      { "ticker": "S30A6", "nombre": "LECAP Abril 30", "pago_final": 127.486, "precio": 124.500, "fecha_vencimiento": "2026-04-30", "activo": true },
-      { "ticker": "S15Y6", "nombre": "LECAP Mayo 15", "pago_final": 105.178, "precio": 101.365, "fecha_vencimiento": "2026-05-15", "activo": true },
-      { "ticker": "S29Y6", "nombre": "LECAP Mayo 29", "pago_final": 132.044, "precio": 126.099, "fecha_vencimiento": "2026-05-29", "activo": true },
-      { "ticker": "T30J6", "nombre": "BONCAP Junio 30", "pago_final": 144.896, "precio": 134.850, "fecha_vencimiento": "2026-06-30", "activo": true },
-      { "ticker": "S31L6", "nombre": "LECAP Julio 31", "pago_final": 117.677, "precio": 107.279, "fecha_vencimiento": "2026-07-31", "activo": true },
-      { "ticker": "S31G6", "nombre": "LECAP Agosto 31", "pago_final": 127.064, "precio": 113.300, "fecha_vencimiento": "2026-08-31", "activo": true },
-      { "ticker": "S30S6", "nombre": "LECAP Sept 30", "pago_final": 117.536, "precio": 101.900, "fecha_vencimiento": "2026-09-30", "activo": true },
-      { "ticker": "TO26", "nombre": "BONCAP Oct 17", "pago_final": 107.750, "precio": 100.050, "fecha_vencimiento": "2026-10-17", "activo": false },
-      { "ticker": "S30O6", "nombre": "LECAP Oct 30", "pago_final": 135.278, "precio": 114.865, "fecha_vencimiento": "2026-10-30", "activo": true },
-      { "ticker": "S30N6", "nombre": "LECAP Nov 30", "pago_final": 129.888, "precio": 107.400, "fecha_vencimiento": "2026-11-30", "activo": true },
-      { "ticker": "T15E7", "nombre": "BONCAP Ene 15/27", "pago_final": 161.104, "precio": 128.250, "fecha_vencimiento": "2027-01-15", "activo": true },
-      { "ticker": "T30A7", "nombre": "BONCAP Abr 30/27", "pago_final": 157.341, "precio": 116.250, "fecha_vencimiento": "2027-04-30", "activo": true },
-      { "ticker": "TY30P", "nombre": "BONCAP May 30/27", "pago_final": 114.750, "precio": 118.700, "fecha_vencimiento": "2027-05-30", "activo": false },
-      { "ticker": "T31Y7", "nombre": "BONCAP May 31/27", "pago_final": 151.563, "precio": 109.200, "fecha_vencimiento": "2027-05-31", "activo": true },
-      { "ticker": "T30J7", "nombre": "BONCAP Jun 30/27", "pago_final": 156.037, "precio": 110.500, "fecha_vencimiento": "2027-06-30", "activo": true }
+      {
+        "ticker": "S17A6",
+        "nombre": "LECAP Abril 17",
+        "pago_final": 110.125,
+        "precio": 108.4,
+        "fecha_vencimiento": "2026-04-17",
+        "activo": true
+      },
+      {
+        "ticker": "S30A6",
+        "nombre": "LECAP Abril 30",
+        "pago_final": 127.486,
+        "precio": 124.5,
+        "fecha_vencimiento": "2026-04-30",
+        "activo": true
+      },
+      {
+        "ticker": "S15Y6",
+        "nombre": "LECAP Mayo 15",
+        "pago_final": 105.178,
+        "precio": 101.365,
+        "fecha_vencimiento": "2026-05-15",
+        "activo": true
+      },
+      {
+        "ticker": "S29Y6",
+        "nombre": "LECAP Mayo 29",
+        "pago_final": 132.044,
+        "precio": 126.099,
+        "fecha_vencimiento": "2026-05-29",
+        "activo": true
+      },
+      {
+        "ticker": "T30J6",
+        "nombre": "BONCAP Junio 30",
+        "pago_final": 144.896,
+        "precio": 134.85,
+        "fecha_vencimiento": "2026-06-30",
+        "activo": true
+      },
+      {
+        "ticker": "S31L6",
+        "nombre": "LECAP Julio 31",
+        "pago_final": 117.677,
+        "precio": 107.279,
+        "fecha_vencimiento": "2026-07-31",
+        "activo": true
+      },
+      {
+        "ticker": "S31G6",
+        "nombre": "LECAP Agosto 31",
+        "pago_final": 127.064,
+        "precio": 113.3,
+        "fecha_vencimiento": "2026-08-31",
+        "activo": true
+      },
+      {
+        "ticker": "S30S6",
+        "nombre": "LECAP Sept 30",
+        "pago_final": 117.536,
+        "precio": 101.9,
+        "fecha_vencimiento": "2026-09-30",
+        "activo": true
+      },
+      {
+        "ticker": "TO26",
+        "nombre": "BONCAP Oct 17",
+        "pago_final": 107.75,
+        "precio": 100.05,
+        "fecha_vencimiento": "2026-10-17",
+        "activo": false
+      },
+      {
+        "ticker": "S30O6",
+        "nombre": "LECAP Oct 30",
+        "pago_final": 135.278,
+        "precio": 114.865,
+        "fecha_vencimiento": "2026-10-30",
+        "activo": true
+      },
+      {
+        "ticker": "S30N6",
+        "nombre": "LECAP Nov 30",
+        "pago_final": 129.888,
+        "precio": 107.4,
+        "fecha_vencimiento": "2026-11-30",
+        "activo": true
+      },
+      {
+        "ticker": "T15E7",
+        "nombre": "BONCAP Ene 15/27",
+        "pago_final": 161.104,
+        "precio": 128.25,
+        "fecha_vencimiento": "2027-01-15",
+        "activo": true
+      },
+      {
+        "ticker": "T30A7",
+        "nombre": "BONCAP Abr 30/27",
+        "pago_final": 157.341,
+        "precio": 116.25,
+        "fecha_vencimiento": "2027-04-30",
+        "activo": true
+      },
+      {
+        "ticker": "TY30P",
+        "nombre": "BONCAP May 30/27",
+        "pago_final": 114.75,
+        "precio": 118.7,
+        "fecha_vencimiento": "2027-05-30",
+        "activo": false
+      },
+      {
+        "ticker": "T31Y7",
+        "nombre": "BONCAP May 31/27",
+        "pago_final": 151.563,
+        "precio": 109.2,
+        "fecha_vencimiento": "2027-05-31",
+        "activo": true
+      },
+      {
+        "ticker": "T30J7",
+        "nombre": "BONCAP Jun 30/27",
+        "pago_final": 156.037,
+        "precio": 110.5,
+        "fecha_vencimiento": "2027-06-30",
+        "activo": true
+      }
     ]
+  },
+  "cedears": {
+    "ratios": {
+      "AAL": {
+        "ratio": 2,
+        "nombre": "American Airlines"
+      },
+      "AAP": {
+        "ratio": 14,
+        "nombre": "Advance Auto Parts"
+      },
+      "AAPL": {
+        "ratio": 20,
+        "nombre": "Apple"
+      },
+      "ABEV": {
+        "ratio": 0.3333,
+        "nombre": "ABEV"
+      },
+      "ABNB": {
+        "ratio": 15,
+        "nombre": "Airbnb"
+      },
+      "ABT": {
+        "ratio": 4,
+        "nombre": "Abbott Labs"
+      },
+      "ACN": {
+        "ratio": 75,
+        "nombre": "Accenture"
+      },
+      "ADBE": {
+        "ratio": 44,
+        "nombre": "Adobe"
+      },
+      "ADI": {
+        "ratio": 15,
+        "nombre": "Analog Devices"
+      },
+      "ADP": {
+        "ratio": 6,
+        "nombre": "ADP"
+      },
+      "AEG": {
+        "ratio": 1,
+        "nombre": "Aegon"
+      },
+      "AEM": {
+        "ratio": 6,
+        "nombre": "AEM"
+      },
+      "AIG": {
+        "ratio": 5,
+        "nombre": "AIG"
+      },
+      "AMAT": {
+        "ratio": 5,
+        "nombre": "Applied Materials"
+      },
+      "AMD": {
+        "ratio": 10,
+        "nombre": "AMD"
+      },
+      "AMGN": {
+        "ratio": 30,
+        "nombre": "Amgen"
+      },
+      "AMX": {
+        "ratio": 1,
+        "nombre": "América Móvil"
+      },
+      "AMZN": {
+        "ratio": 144,
+        "nombre": "Amazon"
+      },
+      "ANF": {
+        "ratio": 1,
+        "nombre": "Abercrombie"
+      },
+      "ARCO": {
+        "ratio": 0.5,
+        "nombre": "ARCO"
+      },
+      "ARM": {
+        "ratio": 27,
+        "nombre": "ARM Holdings"
+      },
+      "ASR": {
+        "ratio": 2,
+        "nombre": "ASR"
+      },
+      "AVY": {
+        "ratio": 18,
+        "nombre": "AVY"
+      },
+      "AXP": {
+        "ratio": 15,
+        "nombre": "American Express"
+      },
+      "BA": {
+        "ratio": 43,
+        "nombre": "Boeing"
+      },
+      "BABA": {
+        "ratio": 9,
+        "nombre": "Alibaba"
+      },
+      "BAK": {
+        "ratio": 2,
+        "nombre": "BAK"
+      },
+      "BB": {
+        "ratio": 3,
+        "nombre": "BlackBerry"
+      },
+      "BBD": {
+        "ratio": 1,
+        "nombre": "Bradesco"
+      },
+      "BCS": {
+        "ratio": 1,
+        "nombre": "Barclays"
+      },
+      "BHP": {
+        "ratio": 2,
+        "nombre": "BHP Group"
+      },
+      "BIDU": {
+        "ratio": 11,
+        "nombre": "Baidu"
+      },
+      "BIIB": {
+        "ratio": 13,
+        "nombre": "Biogen"
+      },
+      "BIOX": {
+        "ratio": 1,
+        "nombre": "Bioceres"
+      },
+      "BK": {
+        "ratio": 19,
+        "nombre": "BNY Mellon"
+      },
+      "BKNG": {
+        "ratio": 700,
+        "nombre": "Booking"
+      },
+      "BKR": {
+        "ratio": 7,
+        "nombre": "Baker Hughes"
+      },
+      "BMY": {
+        "ratio": 3,
+        "nombre": "Bristol-Myers"
+      },
+      "BP": {
+        "ratio": 5,
+        "nombre": "BP"
+      },
+      "BSBR": {
+        "ratio": 1,
+        "nombre": "Santander Brasil"
+      },
+      "C": {
+        "ratio": 3,
+        "nombre": "Citigroup"
+      },
+      "CAH": {
+        "ratio": 3,
+        "nombre": "Cardinal Health"
+      },
+      "CAR": {
+        "ratio": 26,
+        "nombre": "Avis"
+      },
+      "CAT": {
+        "ratio": 20,
+        "nombre": "Caterpillar"
+      },
+      "CCL": {
+        "ratio": 3,
+        "nombre": "Carnival"
+      },
+      "CDE": {
+        "ratio": 1,
+        "nombre": "Coeur Mining"
+      },
+      "CL": {
+        "ratio": 3,
+        "nombre": "Colgate"
+      },
+      "COIN": {
+        "ratio": 27,
+        "nombre": "Coinbase"
+      },
+      "COST": {
+        "ratio": 48,
+        "nombre": "Costco"
+      },
+      "CRM": {
+        "ratio": 6,
+        "nombre": "Salesforce"
+      },
+      "CSCO": {
+        "ratio": 5,
+        "nombre": "Cisco"
+      },
+      "CVS": {
+        "ratio": 15,
+        "nombre": "CVS Health"
+      },
+      "CVX": {
+        "ratio": 16,
+        "nombre": "Chevron"
+      },
+      "CX": {
+        "ratio": 1,
+        "nombre": "Cemex"
+      },
+      "DAL": {
+        "ratio": 8,
+        "nombre": "Delta Air Lines"
+      },
+      "DD": {
+        "ratio": 5,
+        "nombre": "DuPont"
+      },
+      "DE": {
+        "ratio": 40,
+        "nombre": "John Deere"
+      },
+      "DEO": {
+        "ratio": 6,
+        "nombre": "Diageo"
+      },
+      "DHR": {
+        "ratio": 54,
+        "nombre": "Danaher"
+      },
+      "DOW": {
+        "ratio": 6,
+        "nombre": "Dow Inc"
+      },
+      "E": {
+        "ratio": 2,
+        "nombre": "Eni"
+      },
+      "EA": {
+        "ratio": 14,
+        "nombre": "Electronic Arts"
+      },
+      "EBAY": {
+        "ratio": 2,
+        "nombre": "eBay"
+      },
+      "EFX": {
+        "ratio": 4,
+        "nombre": "Equifax"
+      },
+      "EQNR": {
+        "ratio": 16,
+        "nombre": "Equinor"
+      },
+      "ERIC": {
+        "ratio": 20,
+        "nombre": "Ericsson"
+      },
+      "F": {
+        "ratio": 6,
+        "nombre": "Ford"
+      },
+      "FCX": {
+        "ratio": 1,
+        "nombre": "Freeport-McMoRan"
+      },
+      "FDX": {
+        "ratio": 1,
+        "nombre": "FedEx"
+      },
+      "FMX": {
+        "ratio": 10,
+        "nombre": "FEMSA"
+      },
+      "FSLR": {
+        "ratio": 2,
+        "nombre": "First Solar"
+      },
+      "GE": {
+        "ratio": 3,
+        "nombre": "GE Aerospace"
+      },
+      "GFI": {
+        "ratio": 5,
+        "nombre": "Gold Fields"
+      },
+      "GGB": {
+        "ratio": 6,
+        "nombre": "Gerdau"
+      },
+      "GILD": {
+        "ratio": 1,
+        "nombre": "Gilead Sciences"
+      },
+      "GLOB": {
+        "ratio": 14,
+        "nombre": "Globant"
+      },
+      "GLW": {
+        "ratio": 4,
+        "nombre": "Corning"
+      },
+      "GOOGL": {
+        "ratio": 58,
+        "nombre": "Alphabet"
+      },
+      "GPRK": {
+        "ratio": 8,
+        "nombre": "Geopark"
+      },
+      "GRMN": {
+        "ratio": 3,
+        "nombre": "Garmin"
+      },
+      "GSK": {
+        "ratio": 20,
+        "nombre": "GSK"
+      },
+      "GT": {
+        "ratio": 18,
+        "nombre": "Goodyear"
+      },
+      "HD": {
+        "ratio": 18,
+        "nombre": "Home Depot"
+      },
+      "HDB": {
+        "ratio": 2,
+        "nombre": "HDFC Bank"
+      },
+      "HL": {
+        "ratio": 1,
+        "nombre": "Hecla Mining"
+      },
+      "HMC": {
+        "ratio": 1,
+        "nombre": "Honda"
+      },
+      "HMY": {
+        "ratio": 1,
+        "nombre": "Harmony Gold"
+      },
+      "HOG": {
+        "ratio": 3,
+        "nombre": "Harley-Davidson"
+      },
+      "HON": {
+        "ratio": 8,
+        "nombre": "Honeywell"
+      },
+      "HPQ": {
+        "ratio": 1,
+        "nombre": "HP Inc"
+      },
+      "HSBC": {
+        "ratio": 2,
+        "nombre": "HSBC"
+      },
+      "HSY": {
+        "ratio": 28,
+        "nombre": "Hershey"
+      },
+      "HWM": {
+        "ratio": 1,
+        "nombre": "Howmet Aerospace"
+      },
+      "IBM": {
+        "ratio": 15,
+        "nombre": "IBM"
+      },
+      "IBN": {
+        "ratio": 1,
+        "nombre": "ICICI Bank"
+      },
+      "IFF": {
+        "ratio": 12,
+        "nombre": "IFF"
+      },
+      "INFY": {
+        "ratio": 1,
+        "nombre": "Infosys"
+      },
+      "ING": {
+        "ratio": 3,
+        "nombre": "ING Group"
+      },
+      "INTC": {
+        "ratio": 5,
+        "nombre": "Intel"
+      },
+      "IP": {
+        "ratio": 4,
+        "nombre": "International Paper"
+      },
+      "ISRG": {
+        "ratio": 90,
+        "nombre": "Intuitive Surgical"
+      },
+      "ITUB": {
+        "ratio": 1,
+        "nombre": "Itaú Unibanco"
+      },
+      "JCI": {
+        "ratio": 2,
+        "nombre": "JCI"
+      },
+      "JD": {
+        "ratio": 4,
+        "nombre": "JD.com"
+      },
+      "JMIA": {
+        "ratio": 1,
+        "nombre": "Jumia"
+      },
+      "JNJ": {
+        "ratio": 15,
+        "nombre": "Johnson & Johnson"
+      },
+      "JPM": {
+        "ratio": 15,
+        "nombre": "JPMorgan"
+      },
+      "KB": {
+        "ratio": 1,
+        "nombre": "KB Financial"
+      },
+      "KEP": {
+        "ratio": 2,
+        "nombre": "KEPCO"
+      },
+      "KGC": {
+        "ratio": 1,
+        "nombre": "Kinross Gold"
+      },
+      "KMB": {
+        "ratio": 5,
+        "nombre": "Kimberly-Clark"
+      },
+      "KO": {
+        "ratio": 16,
+        "nombre": "Coca-Cola"
+      },
+      "LAC": {
+        "ratio": 2,
+        "nombre": "Lithium Americas"
+      },
+      "LLY": {
+        "ratio": 56,
+        "nombre": "Eli Lilly"
+      },
+      "LMT": {
+        "ratio": 1,
+        "nombre": "Lockheed Martin"
+      },
+      "LND": {
+        "ratio": 1,
+        "nombre": "BrasilAgro"
+      },
+      "LRCX": {
+        "ratio": 1,
+        "nombre": "Lam Research"
+      },
+      "LVS": {
+        "ratio": 1,
+        "nombre": "Las Vegas Sands"
+      },
+      "LYG": {
+        "ratio": 2,
+        "nombre": "Lloyds Banking"
+      },
+      "MCD": {
+        "ratio": 4,
+        "nombre": "McDonald's"
+      },
+      "MDLZ": {
+        "ratio": 2,
+        "nombre": "Mondelez"
+      },
+      "MDT": {
+        "ratio": 4,
+        "nombre": "Medtronic"
+      },
+      "MELI": {
+        "ratio": 5,
+        "nombre": "MercadoLibre"
+      },
+      "META": {
+        "ratio": 30,
+        "nombre": "Meta"
+      },
+      "MFG": {
+        "ratio": 19,
+        "nombre": "Mizuho"
+      },
+      "MMM": {
+        "ratio": 10,
+        "nombre": "3M"
+      },
+      "MO": {
+        "ratio": 4,
+        "nombre": "Altria"
+      },
+      "MOS": {
+        "ratio": 46,
+        "nombre": "Mosaic"
+      },
+      "MRK": {
+        "ratio": 5,
+        "nombre": "Merck"
+      },
+      "MRNA": {
+        "ratio": 20,
+        "nombre": "Moderna"
+      },
+      "MRVL": {
+        "ratio": 24,
+        "nombre": "Marvell"
+      },
+      "MSFT": {
+        "ratio": 1,
+        "nombre": "Microsoft"
+      },
+      "MSI": {
+        "ratio": 1,
+        "nombre": "Motorola Solutions"
+      },
+      "MSTR": {
+        "ratio": 1,
+        "nombre": "MicroStrategy"
+      },
+      "MU": {
+        "ratio": 20,
+        "nombre": "Micron"
+      },
+      "MUFG": {
+        "ratio": 2,
+        "nombre": "Mitsubishi UFJ"
+      },
+      "MUX": {
+        "ratio": 120,
+        "nombre": "McEwen Mining"
+      },
+      "NEM": {
+        "ratio": 12,
+        "nombre": "Newmont"
+      },
+      "NFLX": {
+        "ratio": 1,
+        "nombre": "Netflix"
+      },
+      "NG": {
+        "ratio": 2,
+        "nombre": "NovaGold"
+      },
+      "NGG": {
+        "ratio": 1,
+        "nombre": "National Grid"
+      },
+      "NIO": {
+        "ratio": 1,
+        "nombre": "NIO"
+      },
+      "NKE": {
+        "ratio": 1,
+        "nombre": "Nike"
+      },
+      "NMR": {
+        "ratio": 4,
+        "nombre": "Nomura"
+      },
+      "NTES": {
+        "ratio": 3,
+        "nombre": "NetEase"
+      },
+      "NUE": {
+        "ratio": 5,
+        "nombre": "Nucor"
+      },
+      "NVDA": {
+        "ratio": 28,
+        "nombre": "NVIDIA"
+      },
+      "NVS": {
+        "ratio": 2,
+        "nombre": "Novartis"
+      },
+      "NXE": {
+        "ratio": 4,
+        "nombre": "NXE"
+      },
+      "ORCL": {
+        "ratio": 222,
+        "nombre": "Oracle"
+      },
+      "ORLY": {
+        "ratio": 3,
+        "nombre": "O'Reilly Auto"
+      },
+      "OXY": {
+        "ratio": 3,
+        "nombre": "Occidental"
+      },
+      "PAC": {
+        "ratio": 1,
+        "nombre": "Grupo Aeroportuario"
+      },
+      "PAGS": {
+        "ratio": 50,
+        "nombre": "PagSeguro"
+      },
+      "PANW": {
+        "ratio": 2,
+        "nombre": "Palo Alto Networks"
+      },
+      "PBI": {
+        "ratio": 4,
+        "nombre": "Pitney Bowes"
+      },
+      "PBR": {
+        "ratio": 4,
+        "nombre": "Petrobras"
+      },
+      "PCAR": {
+        "ratio": 3,
+        "nombre": "Paccar"
+      },
+      "PEP": {
+        "ratio": 1,
+        "nombre": "PepsiCo"
+      },
+      "PFE": {
+        "ratio": 6,
+        "nombre": "Pfizer"
+      },
+      "PG": {
+        "ratio": 8,
+        "nombre": "Procter & Gamble"
+      },
+      "PHG": {
+        "ratio": 56,
+        "nombre": "Koninklijke Philips"
+      },
+      "PINS": {
+        "ratio": 2,
+        "nombre": "Pinterest"
+      },
+      "PLTR": {
+        "ratio": 3,
+        "nombre": "Palantir"
+      },
+      "PM": {
+        "ratio": 7,
+        "nombre": "Philip Morris"
+      },
+      "PSX": {
+        "ratio": 1,
+        "nombre": "Phillips 66"
+      },
+      "PYPL": {
+        "ratio": 1,
+        "nombre": "PayPal"
+      },
+      "QCOM": {
+        "ratio": 2,
+        "nombre": "Qualcomm"
+      },
+      "RACE": {
+        "ratio": 10,
+        "nombre": "Ferrari"
+      },
+      "RBLX": {
+        "ratio": 13,
+        "nombre": "Roblox"
+      },
+      "RIO": {
+        "ratio": 29,
+        "nombre": "Rio Tinto"
+      },
+      "RIOT": {
+        "ratio": 2,
+        "nombre": "Riot Platforms"
+      },
+      "ROKU": {
+        "ratio": 2,
+        "nombre": "Roku"
+      },
+      "ROST": {
+        "ratio": 45,
+        "nombre": "Ross Stores"
+      },
+      "RTX": {
+        "ratio": 8,
+        "nombre": "RTX Corp"
+      },
+      "SAN": {
+        "ratio": 0.25,
+        "nombre": "Santander"
+      },
+      "SAP": {
+        "ratio": 3,
+        "nombre": "SAP"
+      },
+      "SATL": {
+        "ratio": 32,
+        "nombre": "Satellogic"
+      },
+      "SBS": {
+        "ratio": 0.5,
+        "nombre": "Sabesp"
+      },
+      "SBUX": {
+        "ratio": 3,
+        "nombre": "Starbucks"
+      },
+      "SCCO": {
+        "ratio": 20,
+        "nombre": "Southern Copper"
+      },
+      "SCHW": {
+        "ratio": 13,
+        "nombre": "Charles Schwab"
+      },
+      "SE": {
+        "ratio": 0.5,
+        "nombre": "Sea Ltd"
+      },
+      "SHEL": {
+        "ratio": 18,
+        "nombre": "Shell"
+      },
+      "SID": {
+        "ratio": 0.125,
+        "nombre": "CSN"
+      },
+      "SLB": {
+        "ratio": 172,
+        "nombre": "Schlumberger"
+      },
+      "SNA": {
+        "ratio": 8,
+        "nombre": "Snap-on"
+      },
+      "SNAP": {
+        "ratio": 30,
+        "nombre": "Snap"
+      },
+      "SNOW": {
+        "ratio": 2,
+        "nombre": "Snowflake"
+      },
+      "SONY": {
+        "ratio": 20,
+        "nombre": "Sony"
+      },
+      "SPCE": {
+        "ratio": 3,
+        "nombre": "Virgin Galactic"
+      },
+      "SPGI": {
+        "ratio": 14,
+        "nombre": "S&P Global"
+      },
+      "STLA": {
+        "ratio": 2,
+        "nombre": "Stellantis"
+      },
+      "STNE": {
+        "ratio": 1,
+        "nombre": "StoneCo"
+      },
+      "SUZ": {
+        "ratio": 8,
+        "nombre": "Suzano"
+      },
+      "SWKS": {
+        "ratio": 6,
+        "nombre": "Skyworks"
+      },
+      "SYY": {
+        "ratio": 24,
+        "nombre": "Sysco"
+      },
+      "T": {
+        "ratio": 3,
+        "nombre": "AT&T"
+      },
+      "TCOM": {
+        "ratio": 36,
+        "nombre": "Trip.com"
+      },
+      "TGT": {
+        "ratio": 0.001,
+        "nombre": "Target"
+      },
+      "TIMB": {
+        "ratio": 22,
+        "nombre": "TIMB"
+      },
+      "TJX": {
+        "ratio": 3,
+        "nombre": "TJX"
+      },
+      "TM": {
+        "ratio": 2,
+        "nombre": "Toyota"
+      },
+      "TMO": {
+        "ratio": 1,
+        "nombre": "Thermo Fisher"
+      },
+      "TMUS": {
+        "ratio": 15,
+        "nombre": "T-Mobile"
+      },
+      "TRIP": {
+        "ratio": 2,
+        "nombre": "TRIP"
+      },
+      "TSLA": {
+        "ratio": 24,
+        "nombre": "Tesla"
+      },
+      "TSM": {
+        "ratio": 1,
+        "nombre": "TSMC"
+      },
+      "TTE": {
+        "ratio": 2,
+        "nombre": "TotalEnergies"
+      },
+      "TV": {
+        "ratio": 16,
+        "nombre": "Grupo Televisa"
+      },
+      "TWLO": {
+        "ratio": 5,
+        "nombre": "Twilio"
+      },
+      "TXN": {
+        "ratio": 5,
+        "nombre": "Texas Instruments"
+      },
+      "UAL": {
+        "ratio": 33,
+        "nombre": "United Airlines"
+      },
+      "UBER": {
+        "ratio": 1,
+        "nombre": "Uber"
+      },
+      "UGP": {
+        "ratio": 20,
+        "nombre": "Ultrapar"
+      },
+      "UL": {
+        "ratio": 5,
+        "nombre": "Unilever"
+      },
+      "UNH": {
+        "ratio": 2,
+        "nombre": "UnitedHealth"
+      },
+      "UPST": {
+        "ratio": 15,
+        "nombre": "Upstart"
+      },
+      "URBN": {
+        "ratio": 2,
+        "nombre": "Urban Outfitters"
+      },
+      "USB": {
+        "ratio": 2,
+        "nombre": "US Bancorp"
+      },
+      "V": {
+        "ratio": 26,
+        "nombre": "Visa"
+      },
+      "VALE": {
+        "ratio": 10,
+        "nombre": "Vale"
+      },
+      "VIST": {
+        "ratio": 1,
+        "nombre": "Vista Energy"
+      },
+      "VIV": {
+        "ratio": 12,
+        "nombre": "Telefonica Brasil ADR"
+      },
+      "VOD": {
+        "ratio": 18,
+        "nombre": "Vodafone"
+      },
+      "VRSN": {
+        "ratio": 101,
+        "nombre": "VeriSign"
+      },
+      "VZ": {
+        "ratio": 0.5,
+        "nombre": "Verizon"
+      },
+      "WFC": {
+        "ratio": 4,
+        "nombre": "Wells Fargo"
+      },
+      "WMT": {
+        "ratio": 6,
+        "nombre": "Walmart"
+      },
+      "XOM": {
+        "ratio": 16,
+        "nombre": "Exxon Mobil"
+      },
+      "XP": {
+        "ratio": 1,
+        "nombre": "XP Inc"
+      }
+    }
   }
 }

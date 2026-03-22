@@ -60,8 +60,8 @@ async function main() {
       continue;
     }
 
-    // Use offer price if available, otherwise close price
-    const price = bymaData.offer > 0 ? bymaData.offer : bymaData.close;
+    // Use last trade price if available, otherwise close price
+    const price = bymaData.trade > 0 ? bymaData.trade : bymaData.close;
     if (price <= 0) {
       notFound.push(ticker);
       continue;

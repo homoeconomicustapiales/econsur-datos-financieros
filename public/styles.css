@@ -276,6 +276,27 @@ body {
   height: 420px;
 }
 
+/* CEDEAR Table */
+.cedear-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; border: 1px solid var(--border); border-radius: 10px; }
+.cedear-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; white-space: nowrap; table-layout: fixed; }
+.cedear-table thead { background: var(--accent); color: #fff; }
+.cedear-table th { padding: 10px 14px; font-weight: 600; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.04em; text-align: right; }
+.cedear-table th:first-child { text-align: left; }
+.cedear-table td { padding: 9px 14px; border-bottom: 1px solid var(--border-light); text-align: right; color: var(--text); font-variant-numeric: tabular-nums; }
+.cedear-table td:first-child { text-align: left; }
+.cedear-table tbody tr { background: var(--card-bg); }
+.cedear-table tbody tr:hover { background: var(--bg-subtle); }
+.cedear-table tbody tr:last-child td { border-bottom: none; }
+.cedear-table .col-cedear-ticker { width: 18%; text-align: left; }
+.cedear-table .col-ratio { width: 8%; }
+.cedear-table .col-adr { width: 14%; }
+.cedear-table .col-vol { width: 14%; }
+.cedear-ticker { font-weight: 700; color: var(--accent); }
+.cedear-nombre { font-size: 0.65rem; color: var(--text-tertiary); font-weight: 400; }
+.cedear-ccl { font-weight: 600; }
+.spread-positive { color: #ef4444; font-weight: 600; }
+.spread-negative { color: var(--green); font-weight: 600; }
+
 .admin-link {
   font-size: 0.72rem;
   color: var(--text-tertiary);
@@ -795,5 +816,15 @@ body {
   .lecap-table td:nth-child(6) { display: none; }
   .lecap-type-badge { font-size: 0.5rem; padding: 1px 4px; margin-left: 4px; }
   .scatter-plot { height: 280px; }
+  /* CEDEAR table mobile */
+  .cedear-table { table-layout: auto; font-size: 0.68rem; }
+  .cedear-table th { padding: 8px 8px; font-size: 0.6rem; }
+  .cedear-table td { padding: 7px 8px; }
+  .cedear-table .col-ratio { display: none; }
+  .cedear-table .col-adr { display: none; }
+  .cedear-table .col-vol { display: none; }
+  .cedear-table td:nth-child(2) { display: none; }
+  .cedear-table td:nth-child(4) { display: none; }
+  .cedear-table td:nth-child(7) { display: none; }
   .footer { padding: 24px 16px 40px; }
 }

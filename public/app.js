@@ -311,6 +311,7 @@ function setupTabs() {
       document.getElementById('tab-billeteras').style.display = target === 'billeteras' ? '' : 'none';
       document.getElementById('tab-plazofijo').style.display = target === 'plazofijo' ? '' : 'none';
       document.getElementById('tab-lecaps').style.display = target === 'lecaps' ? '' : 'none';
+      document.getElementById('tab-cedears').style.display = target === 'cedears' ? '' : 'none';
 
       const hero = document.getElementById('hero');
       if (target === 'plazofijo') {
@@ -325,12 +326,28 @@ function setupTabs() {
         if (!document.getElementById('lecaps-list').hasChildNodes()) {
           loadLecaps();
         }
+      } else if (target === 'cedears') {
+        hero.querySelector('h1').textContent = 'Arbitraje de CEDEARs';
+        hero.querySelector('p').textContent = 'CCL implícito por CEDEAR y spread vs tipo de cambio de referencia.';
+        if (!document.getElementById('cedears-list').hasChildNodes()) {
+          loadCedears();
+        }
       } else {
         hero.querySelector('h1').textContent = 'Rendimientos de Fondos y Billeteras';
         hero.querySelector('p').textContent = 'Compará rendimientos actualizados de billeteras y fondos de liquidez en Argentina.';
       }
     });
   });
+
+  // Header CEDEARs button → switch to CEDEARs tab
+  const headerCedears = document.getElementById('header-cedears');
+  if (headerCedears) {
+    headerCedears.addEventListener('click', (e) => {
+      e.preventDefault();
+      const cedearTab = document.querySelector('.subnav-tab[data-tab="cedears"]');
+      if (cedearTab) cedearTab.click();
+    });
+  }
 }
 
 // ─── Plazo Fijo section ───
@@ -736,4 +753,106 @@ function fitPolyCurve(points, degree, n) {
     result.push({ x: Math.round(x), y });
   }
   return result;
+}
+
+// ─── CEDEAR Arbitrage section ───
+
+async function loadCedears() {
+  const container = document.getElementById('cedears-list');
+  container.innerHTML = `<div class="loading"><div class="loading-spinner"></div><p>Cargando CEDEARs...</p></div>`;
+
+  try {
+    const [config, apiRes] = await Promise.all([
+      fetch('/api/config').then(r => r.json()),
+      fetch('/api/cedears').then(r => r.ok ? r.json() : { data: [] }).catch(() => ({ data: [] }))
+    ]);
+
+    const ratios = config.cedears?.ratios || {};
+    const cedears = apiRes.data || [];
+    const cclRef = apiRes.ccl_reference || 0;
+
+    if (!cedears.length || !cclRef) {
+      container.innerHTML = '<div class="loading">No se pudieron cargar los datos de CEDEARs.</div>';
+      return;
+    }
+
+    // Filter to CEDEARs with known ratios, compute ADR price and spread
+    const items = cedears
+      .filter(c => ratios[c.symbol] && c.ccl_implicit > 0 && c.cedear_price > 0)
+      .map(c => {
+        const info = ratios[c.symbol];
+        const adrUsd = (c.cedear_price * info.ratio) / c.ccl_implicit;
+        const spread = ((c.ccl_implicit / cclRef) - 1) * 100;
+        return {
+          symbol: c.symbol,
+          nombre: info.nombre,
+          ratio: info.ratio,
+          cedearPrice: c.cedear_price,
+          adrPrice: adrUsd,
+          cclImplicit: c.ccl_implicit,
+          spread,
+          volume: c.volume || 0,
+          arsVolume: c.ars_volume || 0,
+          pctChange: c.pct_change || 0,
+        };
+      });
+
+    // Sort by ARS volume descending (most liquid first)
+    items.sort((a, b) => b.arsVolume - a.arsVolume);
+
+    renderCedearsTable(container, items, cclRef);
+
+    const source = document.getElementById('cedears-source');
+    if (source) {
+      source.textContent = `Fuente: data912 (en vivo) — CCL referencia: $${cclRef.toFixed(2)} — ${items.length} tickers`;
+    }
+  } catch (e) {
+    console.error('Error loading CEDEARs:', e);
+    container.innerHTML = '<div class="loading">Error al cargar datos de CEDEARs.</div>';
+  }
+}
+
+function renderCedearsTable(container, items, cclRef) {
+  const rows = items.map(item => {
+    const spreadClass = item.spread > 1 ? 'spread-positive' : item.spread < -1 ? 'spread-negative' : '';
+    const spreadSign = item.spread > 0 ? '+' : '';
+    return `<tr>
+      <td><span class="cedear-ticker">${item.symbol}</span><br><span class="cedear-nombre">${item.nombre}</span></td>
+      <td class="col-ratio">${item.ratio}:1</td>
+      <td>$${item.cedearPrice.toLocaleString('es-AR')}</td>
+      <td class="col-adr">US$${item.adrPrice.toFixed(2)}</td>
+      <td class="cedear-ccl">$${item.cclImplicit.toFixed(0)}</td>
+      <td class="${spreadClass}">${spreadSign}${item.spread.toFixed(2)}%</td>
+      <td class="col-vol">${formatVolume(item.arsVolume)}</td>
+    </tr>`;
+  }).join('');
+
+  container.innerHTML = `
+    <div class="cedear-table-wrap">
+      <table class="cedear-table">
+        <thead>
+          <tr>
+            <th class="col-cedear-ticker">Ticker</th>
+            <th class="col-ratio">Ratio</th>
+            <th>CEDEAR</th>
+            <th class="col-adr">ADR (USD)</th>
+            <th>CCL Impl.</th>
+            <th>Spread</th>
+            <th class="col-vol">Volumen</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+    <p style="font-size:0.7rem;color:var(--text-tertiary);margin-top:6px">
+      CCL referencia: $${cclRef.toFixed(2)} (mediana top-10 por volumen). Spread positivo = CEDEAR caro vs referencia.
+    </p>`;
+}
+
+function formatVolume(v) {
+  if (!v || v <= 0) return '-';
+  if (v >= 1e9) return '$' + (v / 1e9).toFixed(1) + 'B';
+  if (v >= 1e6) return '$' + (v / 1e6).toFixed(0) + 'M';
+  if (v >= 1e3) return '$' + (v / 1e3).toFixed(0) + 'K';
+  return '$' + v.toString();
 }

@@ -40,12 +40,6 @@
         <a href="#" class="currency-tab active">
           <span class="flag">🇦🇷</span> ARS
         </a>
-        <a href="#" class="currency-tab disabled" data-soon>
-          <span class="flag">🇺🇸</span> USD
-        </a>
-        <a href="#" class="currency-tab disabled" data-soon>
-          <span class="flag">₿</span> Criptos
-        </a>
       </nav>
       <a href="/comparar.html" class="admin-link" style="margin-right:6px">Comparar Fondos</a>
       <button class="theme-toggle" id="theme-toggle" aria-label="Cambiar tema">🌙</button>
@@ -57,6 +51,7 @@
       <a href="#" class="subnav-tab active" data-tab="billeteras" role="tab" id="tab-billeteras-tab" aria-selected="true" aria-controls="tab-billeteras">Cuentas y Billeteras</a>
       <a href="#" class="subnav-tab" data-tab="plazofijo" role="tab" id="tab-plazofijo-tab" aria-selected="false" aria-controls="tab-plazofijo">Plazo Fijo</a>
       <a href="#" class="subnav-tab" data-tab="lecaps" role="tab" id="tab-lecaps-tab" aria-selected="false" aria-controls="tab-lecaps">LECAPs</a>
+      <a href="#" class="subnav-tab" data-tab="cedears" role="tab" id="tab-cedears-tab" aria-selected="false" aria-controls="tab-cedears">CEDEARs</a>
     </div>
   </nav>
 
@@ -121,10 +116,20 @@
       </section>
     </div>
 
+    <!-- Tab: CEDEARs -->
+    <div id="tab-cedears" role="tabpanel" aria-labelledby="tab-cedears-tab" style="display:none">
+      <section class="section" id="cedears-section">
+        <h2>Arbitraje de CEDEARs</h2>
+        <p class="section-desc">CCL implícito por ticker y spread vs tipo de cambio de referencia — Datos en vivo</p>
+        <div id="cedears-list"></div>
+        <p class="section-source" id="cedears-source"></p>
+      </section>
+    </div>
+
   </main>
 
   <footer class="footer">
-    <p>Datos de FCIs provistos por CAFCI. Datos de Plazos Fijos provistos por BCRA. Datos de LECAPs de BYMA.</p>
+    <p>Datos de FCIs provistos por CAFCI. Datos de Plazos Fijos provistos por BCRA. Datos de LECAPs y CEDEARs de BYMA via data912.</p>
     <p>Los rendimientos pasados no garantizan rendimientos futuros.</p>
   </footer>
 
