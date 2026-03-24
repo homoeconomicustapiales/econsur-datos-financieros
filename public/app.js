@@ -1772,8 +1772,9 @@ function openCERCalculator(item) {
   function renderCERResumen() {
     const price = parseFloat(document.getElementById('cer-calc-price').value) || item.priceArs;
     const monto = parseFloat(document.getElementById('cer-calc-monto').value) || 1000000;
-    const nominales = monto / price;
-    // Show adjusted flows if available
+    const pricePer1VN = price / 100; // precio es por 100 VN
+    const nominales = monto / pricePer1VN; // VN comprados
+    // Show adjusted flows if available (flujos are per 1 VN)
     const flujos = item.flujosAjustados || [];
     let flowsHTML = '';
     let totalCobro = 0;
@@ -1787,7 +1788,7 @@ function openCERCalculator(item) {
     const ganancia = totalCobro - monto;
     document.getElementById('cer-calc-resumen').innerHTML = `
       <div style="background:var(--bg-subtle);border-radius:8px;padding:12px 16px;font-size:0.85rem;margin-bottom:12px">
-        <div style="display:flex;justify-content:space-between;margin-bottom:6px"><span>Comprás</span><strong>${nominales.toFixed(0)} VN a $${price.toFixed(2)}</strong></div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:6px"><span>Comprás</span><strong>${nominales.toFixed(0)} VN a $${pricePer1VN.toFixed(2)}/VN</strong></div>
         <div style="display:flex;justify-content:space-between;margin-bottom:6px"><span>Invertís</span><strong>$${monto.toLocaleString('es-AR', {minimumFractionDigits:2, maximumFractionDigits:2})}</strong></div>
         ${totalCobro > 0 ? `<div style="display:flex;justify-content:space-between;margin-bottom:6px"><span>Cobrás (estimado)</span><strong>$${totalCobro.toLocaleString('es-AR', {minimumFractionDigits:2, maximumFractionDigits:2})}</strong></div>
         <div style="display:flex;justify-content:space-between;font-size:1rem;margin-top:8px;padding-top:8px;border-top:1px solid var(--border);color:${ganancia >= 0 ? 'var(--green)' : 'var(--red)'}">
