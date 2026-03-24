@@ -1,29 +1,22 @@
 const fetch = require('node-fetch');
 
-const TICKERS_CER = ['TZX26', 'TZXO6', 'TX26', 'TZXD6', 'TZXM7', 'TZX27', 'TZXD7', 'TZX28', 'TX28', 'DICP', 'PARP'];
+const TICKERS_BONDS = ['TZX26', 'TZXO6', 'TX26', 'TZXD6', 'TZXM6', 'TZXM7', 'TZX27', 'TZXD7', 'TZX28', 'TX28', 'DICP', 'PARP'];
+const TICKERS_NOTES = ['X15Y6', 'X29Y6'];
 
 exports.handler = async (event, context) => {
   try {
-    const response = await fetch('https://data912.com/live/arg_bonds', {
-      headers: {
-        'Accept': 'application/json',
-        'User-Agent': 'Mozilla/5.0'
-      }
-    });
+    const [bondsRes, notesRes] = await Promise.all([
+      fetch('https://data912.com/live/arg_bonds', { headers: { 'Accept': 'application/json', 'User-Agent': 'Mozilla/5.0' } }),
+      fetch('https://data912.com/live/arg_notes', { headers: { 'Accept': 'application/json', 'User-Agent': 'Mozilla/5.0' } })
+    ]);
 
-    if (!response.ok) {
-      throw new Error(`data912 API error: ${response.status}`);
-    }
+    if (!bondsRes.ok || !notesRes.ok) throw new Error('data912 API error');
 
-    const data = await response.json();
+    const [bondsData, notesData] = await Promise.all([bondsRes.json(), notesRes.json()]);
 
-    if (!Array.isArray(data)) {
-      throw new Error('Invalid data912 API response format');
-    }
-
-    const bonosCER = data.filter(bond =>
-      TICKERS_CER.includes(bond.symbol)
-    );
+    const fromBonds = Array.isArray(bondsData) ? bondsData.filter(b => TICKERS_BONDS.includes(b.symbol)) : [];
+    const fromNotes = Array.isArray(notesData) ? notesData.filter(b => TICKERS_NOTES.includes(b.symbol)) : [];
+    const bonosCER = [...fromBonds, ...fromNotes];
 
     return {
       statusCode: 200,
