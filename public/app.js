@@ -597,7 +597,7 @@ async function loadPlazoFijo() {
 
     // Source note
     const source = document.querySelector('.section-source');
-    if (source) source.textContent = `Fuente: BCRA — Actualizado: ${dateStr}`;
+    if (source) source.textContent = '';
 
     // Render plazo fijo chart
     const chartItems = sorted.map(banco => {
@@ -789,9 +789,9 @@ async function loadLecaps() {
     const liveCount = items.filter(i => i.live).length;
     if (source) {
       if (hasLive) {
-        source.textContent = `Fuente: data912 (en vivo) — ${liveCount} tickers en vivo, ${items.length - liveCount} con último precio conocido`;
+        source.textContent = '';
       } else {
-        source.textContent = `Fuente: ${lecaps.fuente} — Actualizado: ${lecaps.actualizado}`;
+        source.textContent = '';
       }
     }
 
@@ -1014,7 +1014,7 @@ async function loadSoberanos() {
 
     const source = document.getElementById('soberanos-source');
     if (source) {
-      source.textContent = `Fuente: data912 (precios en USD) — ${items.length} bonos`;
+      source.textContent = '';
     }
   } catch (e) {
     console.error('Error loading soberanos:', e);
@@ -1689,7 +1689,7 @@ async function loadCER() {
 
     const source = document.getElementById('cer-source');
     if (source) {
-      source.textContent = `Fuente: data912 (precios en ARS), BCRA (CER: ${cerUltimoPublicado.toFixed(2)} al ${fechaUltimoCER}) — ${items.length} bonos`;
+      source.textContent = '';
     }
   } catch (e) {
     console.error('Error loading CER bonds:', e);
@@ -1918,7 +1918,7 @@ async function loadONs() {
     items.sort((a, b) => a.duration - b.duration);
     renderONsTable(container, items);
     renderONsYieldCurve(items);
-    document.getElementById('ons-source').textContent = `Fuente: data912 (precios) — ${items.length} ONs corporativas`;
+    document.getElementById('ons-source').textContent = '';
   } catch(err) {
     container.innerHTML = '<p style="color:var(--red)">Error cargando ONs: ' + err.message + '</p>';
   }
