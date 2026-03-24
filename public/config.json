@@ -2368,24 +2368,5 @@
         }
       ]
     },
-    "TO26": {
-      "tipo": "CER",
-      "vencimiento": "2026-10-17",
-      "cer_emision": 0.0,
-      "flujos": [
-        {
-          "fecha": "2026-04-17",
-          "amortizacion": 0.0,
-          "tasa_interes": 7.75,
-          "base": 1.0
-        },
-        {
-          "fecha": "2026-10-17",
-          "amortizacion": 1.0,
-          "tasa_interes": 7.75,
-          "base": 1.0
-        }
-      ]
-    }
   }
 }

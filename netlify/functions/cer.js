@@ -39,7 +39,7 @@ exports.handler = async (event, context) => {
     // BCRA retorna datos en orden descendente (más reciente primero)
     // Buscar el CER más cercano a fc (T-10) que sea <= fc
     let cerT10 = null;
-    for (let i = detalle.length - 1; i >= 0; i--) {
+    for (let i = 0; i < detalle.length; i++) {
       if (detalle[i].fecha <= fcStr) {
         cerT10 = detalle[i];
         break;
