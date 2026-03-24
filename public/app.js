@@ -1704,7 +1704,7 @@ function openCERCalculator(item) {
           <span>Ganancia estimada</span><strong>${ganancia >= 0 ? '+' : ''}$${ganancia.toLocaleString('es-AR', {minimumFractionDigits:2, maximumFractionDigits:2})}</strong></div>` : ''}
       </div>
       ${flowsHTML ? `<h4 style="margin:8px 0;font-size:0.85rem;color:var(--text-secondary)">Flujos ajustados por CER</h4>
-      <div style="max-height:250px;overflow-y:auto">
+      <div>
         <table style="width:100%;font-size:0.8rem;border-collapse:collapse">
           <thead><tr><th style="text-align:left;padding:4px 8px;border-bottom:1px solid var(--border)">Fecha</th>
           <th style="text-align:right;padding:4px 8px;border-bottom:1px solid var(--border)">Por 1 VN</th>
@@ -1915,7 +1915,7 @@ function openONCalculator(item) {
             <div id="on-calc-duration" style="font-size:1.2rem;font-weight:600;color:var(--text)">${item.duration.toFixed(2)} años</div></div>
         </div>
         <h4 style="margin:12px 0 8px;font-size:0.85rem;color:var(--text-secondary)">Flujos de fondos</h4>
-        <div id="on-calc-flows" style="max-height:300px;overflow-y:auto"></div>
+        <div id="on-calc-flows"></div>
       </div>
     </div>`;
   document.body.appendChild(overlay);

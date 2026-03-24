@@ -155,8 +155,9 @@ body {
   border-radius: 12px;
   width: 100%;
   max-width: 700px;
+  max-height: 90vh;
   box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-  overflow: hidden;
+  overflow-y: auto;
   position: relative;
 }
 .mundo-modal-header {
@@ -209,7 +210,7 @@ body {
 .mundo-modal-close:hover { color: var(--text); }
 .mundo-modal-body {
   padding: 16px 20px 20px;
-  height: 350px;
+  min-height: 200px;
   position: relative;
 }
 .mundo-modal-loading {
