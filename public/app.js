@@ -1000,6 +1000,7 @@ async function loadSoberanos() {
         yearsToMaturity,
         vencimiento: bondConfig.vencimiento,
         volume: bp.volume,
+        flujos: futureFlows,
       });
     }
 
@@ -1062,11 +1063,13 @@ function calcDuration(price, flows, settlementDate, ytmPct) {
   return totalPV > 0 ? weightedTime / totalPV : 0;
 }
 
+let _soberanosItems = [];
 function renderSoberanosTable(container, items) {
-  const rows = items.map(item => {
+  _soberanosItems = items;
+  const rows = items.map((item, idx) => {
     const leyClass = item.ley === 'NY' ? 'ley-ny' : 'ley-local';
     const leyLabel = item.ley === 'NY' ? 'NY' : 'Local';
-    return `<tr>
+    return `<tr data-sob-idx="${idx}" style="cursor:pointer">
       <td><span class="soberano-ticker">${item.symbol}</span><span class="soberano-ley ${leyClass}">${leyLabel}</span></td>
       <td class="col-ley">${leyLabel}</td>
       <td>US$${item.priceUsd.toFixed(2)}</td>
@@ -1092,14 +1095,101 @@ function renderSoberanosTable(container, items) {
         <tbody>${rows}</tbody>
       </table>
     </div>
-    <p class="calc-hint">💡 <span>Click</span> en cualquier bono para abrir la calculadora</p>
+    <p class="calc-hint">📊 Click en cualquier bono para abrir la calculadora</p>
     <p style="font-size:0.7rem;color:var(--text-tertiary);margin-top:6px">
       TIR (YTM) calculada con flujos de fondos futuros descontados. Duration en años (Macaulay).
     </p>`;
 
-  // Make sortable
+  container.querySelectorAll('tr[data-sob-idx]').forEach(tr => {
+    tr.addEventListener('click', () => {
+      const item = _soberanosItems[parseInt(tr.dataset.sobIdx)];
+      if (item) openSoberanoCalculator(item);
+    });
+  });
+
   const table = container.querySelector('.soberanos-table');
   if (table) makeSortable(table);
+}
+
+function openSoberanoCalculator(item) {
+  document.querySelector('.mundo-modal-overlay')?.remove();
+  const overlay = document.createElement('div');
+  overlay.className = 'mundo-modal-overlay';
+  const inputStyle = 'display:block;font-size:1.1rem;font-weight:700;width:130px;padding:6px 8px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text)';
+  const leyLabel = item.ley === 'NY' ? 'Ley NY' : 'Ley Local';
+  overlay.innerHTML = `
+    <div class="mundo-modal">
+      <div class="mundo-modal-header">
+        <div><h3 style="margin:0">${item.symbol} — Calculadora</h3>
+        <p style="margin:4px 0 0;color:var(--text-secondary);font-size:0.85rem">${leyLabel} — Vencimiento: ${item.vencimiento}</p></div>
+        <button class="mundo-modal-close">&times;</button>
+      </div>
+      <div class="mundo-modal-body" style="padding:16px">
+        <div style="display:flex;gap:20px;align-items:center;margin-bottom:16px;flex-wrap:wrap">
+          <div><label style="font-size:0.8rem;color:var(--text-secondary)">Precio USD</label>
+            <input type="number" id="sob-calc-price" value="${item.priceUsd.toFixed(2)}" step="0.01" style="${inputStyle}"></div>
+          <div><label style="font-size:0.8rem;color:var(--text-secondary)">Monto a invertir (USD)</label>
+            <input type="number" id="sob-calc-monto" value="10000" step="100" style="${inputStyle}"></div>
+          <div><label style="font-size:0.8rem;color:var(--text-secondary)">TIR</label>
+            <div id="sob-calc-tir" style="font-size:1.5rem;font-weight:700;color:${item.ytm >= 0 ? 'var(--green)' : 'var(--red)'}">${item.ytm.toFixed(2)}%</div></div>
+          <div><label style="font-size:0.8rem;color:var(--text-secondary)">Duration</label>
+            <div id="sob-calc-duration" style="font-size:1.2rem;font-weight:600;color:var(--text)">${item.duration.toFixed(2)} años</div></div>
+        </div>
+        <div id="sob-calc-flows"></div>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+  overlay.querySelector('.mundo-modal-close').addEventListener('click', () => overlay.remove());
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+
+  function renderSobFlows() {
+    const price = parseFloat(document.getElementById('sob-calc-price').value) || item.priceUsd;
+    const monto = parseFloat(document.getElementById('sob-calc-monto').value) || 10000;
+    const nominales = monto / (price / 100);
+    const scale = nominales / 100;
+    const flowsHTML = item.flujos.map(f => {
+      const scaled = f.monto * scale;
+      return `<tr><td>${f.fecha.toLocaleDateString('es-AR')}</td><td style="text-align:right">$${f.monto.toFixed(2)}</td><td style="text-align:right;font-weight:600">$${scaled.toFixed(2)}</td></tr>`;
+    }).join('');
+    const totalPer100 = item.flujos.reduce((s, f) => s + f.monto, 0);
+    const totalScaled = totalPer100 * scale;
+    const ganancia = totalScaled - monto;
+    document.getElementById('sob-calc-flows').innerHTML = `
+      <h4 style="margin:0 0 8px;font-size:0.85rem;color:var(--text-secondary)">Flujos de fondos</h4>
+      <table style="width:100%;font-size:0.8rem;border-collapse:collapse">
+        <thead><tr><th style="text-align:left;padding:4px 8px;border-bottom:1px solid var(--border)">Fecha</th>
+        <th style="text-align:right;padding:4px 8px;border-bottom:1px solid var(--border)">Por 100 VN</th>
+        <th style="text-align:right;padding:4px 8px;border-bottom:1px solid var(--border)">Tu inversión</th></tr></thead>
+        <tbody>${flowsHTML}</tbody>
+        <tfoot>
+          <tr style="font-weight:700;border-top:2px solid var(--border)">
+            <td style="padding:4px 8px">Total cobros</td><td style="text-align:right;padding:4px 8px">$${totalPer100.toFixed(2)}</td>
+            <td style="text-align:right;padding:4px 8px">$${totalScaled.toFixed(2)}</td></tr>
+          <tr style="font-weight:700;color:${ganancia >= 0 ? 'var(--green)' : 'var(--red)'}">
+            <td style="padding:4px 8px">Ganancia</td><td></td>
+            <td style="text-align:right;padding:4px 8px">${ganancia >= 0 ? '+' : ''}$${ganancia.toFixed(2)}</td></tr>
+        </tfoot>
+      </table>
+      <p style="font-size:0.7rem;color:var(--text-tertiary);margin-top:8px">Comprás ${nominales.toFixed(0)} VN a US$${(price/100).toFixed(4)}/VN</p>`;
+  }
+  renderSobFlows();
+
+  const priceInput = document.getElementById('sob-calc-price');
+  const montoInput = document.getElementById('sob-calc-monto');
+  const tirDisplay = document.getElementById('sob-calc-tir');
+  const durDisplay = document.getElementById('sob-calc-duration');
+  function recalcSob() {
+    const newPrice = parseFloat(priceInput.value);
+    if (!newPrice || newPrice <= 0) return;
+    const today = new Date();
+    const newYtm = calcYTM(newPrice, item.flujos, today);
+    const newDur = calcDuration(newPrice, item.flujos, today, newYtm);
+    if (isFinite(newYtm)) { tirDisplay.textContent = newYtm.toFixed(2) + '%'; tirDisplay.style.color = newYtm >= 0 ? 'var(--green)' : 'var(--red)'; }
+    if (isFinite(newDur)) { durDisplay.textContent = newDur.toFixed(2) + ' años'; }
+    renderSobFlows();
+  }
+  priceInput.addEventListener('input', recalcSob);
+  montoInput.addEventListener('input', renderSobFlows);
 }
 
 let soberanosChart = null;
