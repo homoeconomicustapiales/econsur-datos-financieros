@@ -1,7 +1,7 @@
 const fetch = require('node-fetch');
 
 const TICKERS_BONDS = ['TZX26', 'TZXO6', 'TX26', 'TZXD6', 'TZXM6', 'TZXM7', 'TZX27', 'TZXD7', 'TZX28', 'TX28', 'DICP', 'PARP'];
-const TICKERS_NOTES = ['X15Y6', 'X29Y6'];
+const TICKERS_NOTES = ['X15Y6', 'X29Y6', 'X31L6', 'X30S6', 'X30N6'];
 
 exports.handler = async (event, context) => {
   try {

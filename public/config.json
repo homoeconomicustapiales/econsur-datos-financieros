@@ -4144,6 +4144,45 @@
           "base": 0.5
         }
       ]
+    },
+    "X31L6": {
+      "tipo": "CER",
+      "vencimiento": "2026-07-31",
+      "cer_emision": 685.5506,
+      "flujos": [
+        {
+          "fecha": "2026-07-31",
+          "amortizacion": 1.0,
+          "tasa_interes": 0.0,
+          "base": 0.5
+        }
+      ]
+    },
+    "X30S6": {
+      "tipo": "CER",
+      "vencimiento": "2026-09-30",
+      "cer_emision": 714.9849,
+      "flujos": [
+        {
+          "fecha": "2026-09-30",
+          "amortizacion": 1.0,
+          "tasa_interes": 0.0,
+          "base": 0.5
+        }
+      ]
+    },
+    "X30N6": {
+      "tipo": "CER",
+      "vencimiento": "2026-11-30",
+      "cer_emision": 659.6789,
+      "flujos": [
+        {
+          "fecha": "2026-11-30",
+          "amortizacion": 1.0,
+          "tasa_interes": 0.0,
+          "base": 0.5
+        }
+      ]
     }
   }
 }
