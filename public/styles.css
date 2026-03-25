@@ -234,12 +234,13 @@ body {
 }
 
 .header-inner {
-  max-width: 780px;
+  max-width: 960px;
   margin: 0 auto;
   padding: 12px 24px;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 8px;
 }
 
 .logo {
@@ -260,9 +261,9 @@ body {
 
 .currency-tab {
   text-decoration: none;
-  padding: 5px 12px;
+  padding: 5px 10px;
   border-radius: 6px;
-  width: 105px;
+  width: auto;
   text-align: center;
   justify-content: center;
   white-space: nowrap;
@@ -503,6 +504,225 @@ body {
 .admin-link:hover {
   border-color: var(--text);
 }
+
+/* Auth Area */
+.auth-area {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.auth-user {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.auth-avatar {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+}
+.auth-logout-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  font-family: var(--font);
+  padding: 2px 4px;
+}
+.auth-logout-btn:hover { color: var(--red); }
+
+/* Portfolio */
+.portfolio-google-btn {
+  display: inline-flex;
+  align-items: center;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 24px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+  font-family: var(--font);
+  transition: all 0.15s;
+  box-shadow: var(--shadow);
+}
+.portfolio-google-btn:hover { box-shadow: var(--shadow-lg); background: var(--bg-subtle); }
+.portfolio-add-btn {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: var(--font);
+  transition: all 0.15s;
+}
+.portfolio-add-btn:hover { opacity: 0.9; }
+
+/* Portfolio Summary Cards */
+.portfolio-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+  margin: 16px 0;
+}
+.portfolio-summary-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+}
+.portfolio-summary-card .label {
+  font-size: 0.7rem;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+.portfolio-summary-card .value {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-top: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+@media (max-width: 900px) {
+  .portfolio-summary-card .value { font-size: 0.9rem; }
+}
+
+/* Portfolio Holdings Table */
+.portfolio-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+  margin-top: 16px;
+}
+.portfolio-table th {
+  text-align: left;
+  padding: 8px 10px;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-tertiary);
+  border-bottom: 2px solid var(--border);
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.portfolio-table td {
+  padding: 10px;
+  border-bottom: 1px solid var(--border-light);
+  vertical-align: middle;
+}
+.portfolio-table tr:hover td {
+  background: var(--bg-subtle);
+}
+.portfolio-table .col-actions {
+  text-align: right;
+  white-space: nowrap;
+}
+.portfolio-table .col-actions button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 6px;
+  font-size: 0.85rem;
+  opacity: 0.5;
+  transition: opacity 0.15s;
+}
+.portfolio-table .col-actions button:hover { opacity: 1; }
+
+/* Portfolio Modal */
+.portfolio-modal-step { margin-bottom: 16px; }
+.portfolio-type-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-top: 12px;
+}
+.portfolio-type-btn {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  cursor: pointer;
+  text-align: center;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text);
+  font-family: var(--font);
+  transition: all 0.15s;
+}
+.portfolio-type-btn:hover { border-color: var(--accent); background: var(--accent-light); }
+.portfolio-type-btn.selected { border-color: var(--accent); background: var(--accent-light); }
+.portfolio-type-btn .emoji { font-size: 1.3rem; display: block; margin-bottom: 4px; }
+
+/* Cashflow Table */
+.cashflow-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+  margin-top: 12px;
+}
+.cashflow-table th {
+  text-align: left;
+  padding: 8px 10px;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-tertiary);
+  border-bottom: 2px solid var(--border);
+  font-weight: 600;
+}
+.cashflow-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border-light);
+}
+.cashflow-month-header {
+  background: var(--bg-subtle);
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+.cashflow-month-header td { padding: 10px !important; }
+
+/* Portfolio TC Toggle */
+.portfolio-tc-btn {
+  background: none;
+  border: none;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-family: var(--font);
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.portfolio-tc-btn.active {
+  background: var(--card-bg);
+  color: var(--text);
+  box-shadow: var(--shadow-sm);
+}
+.portfolio-tc-btn:hover:not(.active) { color: var(--text); }
+
+/* Portfolio empty state */
+.portfolio-empty {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-tertiary);
+}
+.portfolio-empty .emoji { font-size: 2.5rem; margin-bottom: 12px; }
+.portfolio-empty p { font-size: 0.85rem; }
 
 /* Theme Toggle */
 .theme-toggle {
@@ -1152,7 +1372,11 @@ body {
   .currency-tabs { flex-shrink: 0; gap: 0; padding: 2px; }
   .currency-tab { padding: 4px 8px; font-size: 0.65rem; width: auto; min-width: 0; }
   .currency-tab .flag { display: none; }
+  .auth-area { display: none; }
+  .auth-login-btn { font-size: 0.6rem; padding: 3px 6px; }
   .admin-link { display: none; }
+  .portfolio-type-grid { grid-template-columns: repeat(2, 1fr); }
+  .portfolio-summary-grid { grid-template-columns: repeat(2, 1fr); }
   .subnav-inner { padding: 0 16px; gap: 16px; }
   .subnav-tab { font-size: 0.75rem; padding: 8px 0; }
   .hero { padding: 16px 16px 8px; }

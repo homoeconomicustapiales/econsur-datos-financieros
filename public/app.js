@@ -1,3 +1,91 @@
+// ─── Supabase Auth ───
+let supabaseClient = null;
+let currentUser = null;
+let _portfolioConfig = null; // cached config for portfolio use
+
+async function initSupabase() {
+  try {
+    const resp = await fetch('/api/auth-config');
+    const { url, anonKey } = await resp.json();
+    if (!url || !anonKey) return;
+    supabaseClient = window.supabase.createClient(url, anonKey, {
+      auth: { flowType: 'pkce' }
+    });
+
+    // Handle PKCE OAuth callback (code in query params)
+    const params = new URLSearchParams(location.search);
+    if (params.has('code')) {
+      const { data: { session }, error } = await supabaseClient.auth.exchangeCodeForSession(params.get('code'));
+      if (session) {
+        currentUser = session.user;
+        updateAuthUI();
+        history.replaceState(null, '', location.pathname + '#portfolio');
+        if (window._switchToPortfolio) window._switchToPortfolio();
+        // Ensure portfolio loads after OAuth redirect
+        setTimeout(() => loadPortfolio(), 100);
+        return;
+      }
+    }
+
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    if (session) {
+      currentUser = session.user;
+      updateAuthUI(); // handles portfolio-login-prompt / portfolio-content visibility
+      // If user is on portfolio tab, load holdings now that we have the session
+      if (location.hash === '#portfolio') loadPortfolio();
+    }
+
+    supabaseClient.auth.onAuthStateChange((event, session) => {
+      currentUser = session?.user || null;
+      updateAuthUI();
+    });
+
+    // Track page view (fire and forget, once per session)
+    if (!sessionStorage.getItem('pv_tracked')) {
+      supabaseClient.from('page_views').insert({
+        path: (location.hash || '/').slice(0, 200),
+        referrer: (document.referrer || '').slice(0, 500) || null,
+      }).catch(() => {});
+      sessionStorage.setItem('pv_tracked', '1');
+    }
+  } catch (e) {
+    console.warn('Supabase init skipped:', e.message);
+  }
+}
+
+async function loginWithGoogle() {
+  if (!supabaseClient) return;
+  await supabaseClient.auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo: window.location.origin + '/#portfolio' }
+  });
+}
+
+async function logout() {
+  if (!supabaseClient) return;
+  await supabaseClient.auth.signOut();
+  currentUser = null;
+  updateAuthUI();
+  if (location.hash === '#portfolio') location.hash = 'mundo';
+}
+
+function updateAuthUI() {
+  const userDiv = document.getElementById('auth-user');
+  const avatar = document.getElementById('auth-avatar');
+  const portfolioLoginPrompt = document.getElementById('portfolio-login-prompt');
+  const portfolioContent = document.getElementById('portfolio-content');
+  if (currentUser) {
+    if (userDiv) userDiv.style.display = 'flex';
+    if (avatar) avatar.src = currentUser.user_metadata?.avatar_url || '';
+    if (portfolioLoginPrompt) portfolioLoginPrompt.style.display = 'none';
+    if (portfolioContent) portfolioContent.style.display = '';
+  } else {
+    if (userDiv) userDiv.style.display = 'none';
+    if (portfolioLoginPrompt) portfolioLoginPrompt.style.display = '';
+    if (portfolioContent) portfolioContent.style.display = 'none';
+  }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   setupThemeToggle();
   init();
@@ -5,18 +93,13 @@ document.addEventListener('DOMContentLoaded', () => {
   setupKeyboardNav();
   loadMundo();
   loadNewsTicker();
-  updateVisitCounter();
-});
+  initSupabase();
 
-function updateVisitCounter() {
-  fetch('/api/visits')
-    .then(r => r.json())
-    .then(data => {
-      const el = document.getElementById('visit-counter');
-      if (el && data.count) el.textContent = data.count.toLocaleString('es-AR') + ' visitas';
-    })
-    .catch(() => {});
-}
+  // Auth event listeners
+  document.getElementById('auth-logout-btn')?.addEventListener('click', logout);
+  document.getElementById('portfolio-google-login')?.addEventListener('click', loginWithGoogle);
+  document.getElementById('portfolio-add-btn')?.addEventListener('click', openAddHoldingModal);
+});
 
 function setupThemeToggle() {
   const saved = localStorage.getItem('theme');
@@ -61,6 +144,7 @@ const ENTITY_LOGOS = {
   "Carrefour Banco": "https://api.argentinadatos.com/static/logos/carrefour-banco.png",
   "Mercado Fondo": "https://api.argentinadatos.com/static/logos/mercado-pago.png",
   "LB Finanzas": "data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyBpZD0iTGF5ZXJfMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB2aWV3Qm94PSIwIDAgMTggMTgiPgogIDxyZWN0IHdpZHRoPSIxOCIgaGVpZ2h0PSIxOCIgc3R5bGU9ImZpbGw6ICM1MjIzOTg7Ii8+CiAgPGc+CiAgICA8cGF0aCBkPSJNNi43MSw3Ljc3bC4zOS40OWMuNTIuNjQsMS4xMS45NiwxLjc1Ljk2LDEuMTksMCwyLjI3LTEuMTIsMi4zOS0xLjMxLDAsLjAyLDAsMCwuMDMtLjA1LTEuNDUtLjkyLTIuODktMS44NC00LjMzLTIuNzctLjI0LS4xNS0uNDgtLjIzLS43Mi0uMDUtLjI0LjE5LS4yMi40My0uMTQuNy4yMi42OC40MywxLjM1LjYzLDIuMDNaIiBzdHlsZT0iZmlsbDogI2ZmZjsiLz4KICAgIDxwYXRoIGQ9Ik0xMiw5LjExYzAsLjM2LS4yLjctLjUxLjg4LTEuNDcuOTUtMi45NiwxLjg5LTQuNDMsMi44NC0uMDcuMDUtLjE0LjA5LS4yMi4xNC0uMTguMTQtLjQ0LjE0LS42MiwwLS4xOS0uMTQtLjI2LS4zOS0uMTgtLjYxLjExLS40LjIzLS43OS4zNi0xLjE5LjE4LS41Ny4zOC0xLjEyLjUtMS43LjA3LS4zLjA3LS42MSwwLS45MSwyLjExLDIuNTksNC42OS0uMzYsNC41OS0uNDMuMzQuMjIuNTEuNTMuNTEuOThaIiBzdHlsZT0iZmlsbDogI2ZmZjsiLz4KICA8L2c+Cjwvc3ZnPg==",
+  "Pellegrini": "data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyBpZD0iTGF5ZXJfMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB2aWV3Qm94PSIwIDAgMTggMTgiPgogIDxyZWN0IHdpZHRoPSIxOCIgaGVpZ2h0PSIxOCIgc3R5bGU9ImZpbGw6ICMwMDVmODY7Ii8+CiAgPGc+CiAgICA8cGF0aCBkPSJNOSw0Yy0yLjc2LDAtNSwyLjI0LTUsNXMyLjI0LDUsNSw1LDUtMi4yNCw1LTUtMi4yNC01LTUtNVpNMTEuODIsMTEuOXMwLC4wMS0uMDEuMDFoLTUuNnMtLjAxLDAtLjAxLS4wMXYtLjU2czAtLjAxLjAxLS4wMWg1LjZzLjAxLDAsLjAxLjAxdi41NmgwWk04LjA0LDEwLjQzdi0yLjg0aC42NHYyLjg0aC42M3YtMi44NGguNjR2Mi44NGguNjR2LTIuODRoLjY0djIuODRoLjI5di41OHMwLC4wMS0uMDEuMDFoLTUuMDJzLS4wMSwwLS4wMS0uMDF2LS41OGguMjh2LTIuODRoLjY0djIuODRoLjY0LDBaTTEyLjAxLDYuOTlsLS4xOC4zMXMtLjAyLjAyLS4wMy4wMmgtNS41OXMtLjAyLDAtLjAzLS4wMmwtLjE4LS4zMXMwLS4wMiwwLS4wM2wyLjk4LTEuNThzLjAzLDAsLjA0LDBsMi45OCwxLjU4cy4wMS4wMiwwLC4wM2gwWiIgc3R5bGU9ImZpbGw6ICNmZmY7Ii8+CiAgICA8cGF0aCBkPSJNMTAuNDQsNi43OGwtMS40LS42OHMtLjAyLS4wMS0uMDMtLjAxYzAsMC0uMDIsMC0uMDMsMGwtMS40Mi42OXMwLDAsMCwwaDIuODhzLjAxLDAsMCwwWiIgc3R5bGU9ImZpbGw6ICNmZmY7Ii8+CiAgPC9nPgo8L3N2Zz4=",
 };
 
 // Lookup logo for garantizados/especiales by nombre
@@ -82,6 +166,7 @@ function getLogoForEntity(entidad) {
   if (lower.includes('cocos')) return ENTITY_LOGOS['Cocos'];
   if (lower.includes('fiwind')) return ENTITY_LOGOS['Fiwind'];
   if (lower.includes('mercado')) return ENTITY_LOGOS['Mercado Fondo'];
+  if (lower.includes('pellegrini') || lower.includes('nacion') || lower.includes('nación')) return ENTITY_LOGOS['Pellegrini'];
   return null;
 }
 
@@ -368,6 +453,8 @@ function setupTabs() {
   const headerONs = document.getElementById('header-ons');
   const headerMundo = document.getElementById('header-mundo');
 
+  const headerPortfolio = document.getElementById('header-portfolio');
+
   function hideAllTabs() {
     document.getElementById('tab-billeteras').style.display = 'none';
     document.getElementById('tab-plazofijo').style.display = 'none';
@@ -376,7 +463,9 @@ function setupTabs() {
     document.getElementById('tab-ons').style.display = 'none';
     document.getElementById('tab-soberanos').style.display = 'none';
     document.getElementById('section-mundo').style.display = 'none';
-    [headerArs, headerSoberanos, headerONs, headerMundo].forEach(b => b && b.classList.remove('active'));
+    document.getElementById('tab-portfolio').style.display = 'none';
+    [headerArs, headerSoberanos, headerONs, headerMundo, headerPortfolio].forEach(b => b && b.classList.remove('active'));
+    hero.style.display = '';
   }
 
   function updatePageTitle(section) {
@@ -386,9 +475,29 @@ function setupTabs() {
       ars: 'Billeteras y Fondos',
       bonos: 'Bonos Soberanos USD',
       plazofijo: 'Tasas Plazo Fijo',
-      lecaps: 'LECAPs y BONCAPs'
+      lecaps: 'LECAPs y BONCAPs',
+      portfolio: 'Mi Portfolio'
     };
     document.title = titles[section] ? `${titles[section]} — ${base}` : base;
+  }
+
+  function switchToPortfolio() {
+    hideAllTabs();
+    headerPortfolio.classList.add('active');
+    subnav.style.display = 'none';
+    document.getElementById('tab-portfolio').style.display = 'block';
+    hero.querySelector('h1').textContent = '';
+    hero.querySelector('p').textContent = '';
+    hero.style.display = 'none';
+    updatePageTitle('portfolio');
+    if (currentUser) {
+      document.getElementById('portfolio-login-prompt').style.display = 'none';
+      document.getElementById('portfolio-content').style.display = '';
+      loadPortfolio();
+    } else {
+      document.getElementById('portfolio-login-prompt').style.display = '';
+      document.getElementById('portfolio-content').style.display = 'none';
+    }
   }
 
   function switchToArs() {
@@ -471,6 +580,8 @@ function setupTabs() {
   if (headerSoberanos) headerSoberanos.addEventListener('click', (e) => { e.preventDefault(); switchToSoberanos(); location.hash = 'bonos'; });
   if (headerONs) headerONs.addEventListener('click', (e) => { e.preventDefault(); switchToONs(); location.hash = 'ons'; });
   if (headerMundo) headerMundo.addEventListener('click', (e) => { e.preventDefault(); switchToMundo(); location.hash = 'mundo'; });
+  if (headerPortfolio) headerPortfolio.addEventListener('click', (e) => { e.preventDefault(); switchToPortfolio(); location.hash = 'portfolio'; });
+  window._switchToPortfolio = switchToPortfolio;
 
   // Handle initial hash on page load
   const initialHash = location.hash.replace('#', '');
@@ -480,6 +591,7 @@ function setupTabs() {
   else if (initialHash === 'lecaps') { switchToArs(); document.querySelector('.subnav-tab[data-tab="lecaps"]')?.click(); }
   else if (initialHash === 'cer') { switchToArs(); document.querySelector('.subnav-tab[data-tab="cer"]')?.click(); }
   else if (initialHash === 'ons') switchToONs();
+  else if (initialHash === 'portfolio') switchToPortfolio();
 
   // Handle back/forward navigation (skip if subnav tab already active)
   let _hashChanging = false;
@@ -493,6 +605,7 @@ function setupTabs() {
     else if (h === 'lecaps') { switchToArs(); document.querySelector('.subnav-tab[data-tab="lecaps"]')?.click(); }
     else if (h === 'cer') { switchToArs(); document.querySelector('.subnav-tab[data-tab="cer"]')?.click(); }
     else if (h === 'ons') switchToONs();
+    else if (h === 'portfolio') switchToPortfolio();
     else switchToMundo();
     _hashChanging = false;
   });
@@ -1125,7 +1238,7 @@ function openSoberanoCalculator(item) {
         <button class="mundo-modal-close">&times;</button>
       </div>
       <div class="mundo-modal-body" style="padding:16px">
-        <div style="display:flex;gap:20px;align-items:center;margin-bottom:16px;flex-wrap:wrap">
+        <div style="display:flex;gap:20px;align-items:center;margin-bottom:12px;flex-wrap:wrap">
           <div><label style="font-size:0.8rem;color:var(--text-secondary)">Precio USD</label>
             <input type="number" id="sob-calc-price" value="${item.priceUsd.toFixed(2)}" step="0.01" style="${inputStyle}"></div>
           <div><label style="font-size:0.8rem;color:var(--text-secondary)">Monto a invertir (USD)</label>
@@ -1134,6 +1247,13 @@ function openSoberanoCalculator(item) {
             <div id="sob-calc-tir" style="font-size:1.5rem;font-weight:700;color:${item.ytm >= 0 ? 'var(--green)' : 'var(--red)'}">${item.ytm.toFixed(2)}%</div></div>
           <div><label style="font-size:0.8rem;color:var(--text-secondary)">Duration</label>
             <div id="sob-calc-duration" style="font-size:1.2rem;font-weight:600;color:var(--text)">${item.duration.toFixed(2)} años</div></div>
+        </div>
+        <div style="display:flex;gap:16px;align-items:center;margin-bottom:16px;flex-wrap:wrap;padding:8px 12px;background:var(--bg-subtle);border-radius:6px">
+          <span style="font-size:0.75rem;color:var(--text-secondary);font-weight:600">Costos:</span>
+          <div style="display:flex;align-items:center;gap:4px"><label style="font-size:0.75rem;color:var(--text-secondary)">Arancel %</label>
+            <input type="number" id="sob-calc-arancel" value="0.45" step="0.01" style="width:70px;padding:4px 6px;font-size:0.85rem;font-weight:600;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text)"></div>
+          <div style="display:flex;align-items:center;gap:4px"><label style="font-size:0.75rem;color:var(--text-secondary)">Impuestos %</label>
+            <input type="number" id="sob-calc-impuestos" value="0.01" step="0.01" style="width:70px;padding:4px 6px;font-size:0.85rem;font-weight:600;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text)"></div>
         </div>
         <div id="sob-calc-flows"></div>
       </div>
@@ -1144,8 +1264,12 @@ function openSoberanoCalculator(item) {
 
   function renderSobFlows() {
     const price = parseFloat(document.getElementById('sob-calc-price').value) || item.priceUsd;
+    const arancel = parseFloat(document.getElementById('sob-calc-arancel').value) || 0;
+    const impuestos = parseFloat(document.getElementById('sob-calc-impuestos').value) || 0;
+    const costosPct = (arancel + impuestos) / 100;
+    const effectivePrice = price * (1 + costosPct);
     const monto = parseFloat(document.getElementById('sob-calc-monto').value) || 10000;
-    const nominales = monto / (price / 100);
+    const nominales = monto / (effectivePrice / 100);
     const scale = nominales / 100;
     const flowsHTML = item.flujos.map(f => {
       const scaled = f.monto * scale;
@@ -1176,20 +1300,29 @@ function openSoberanoCalculator(item) {
 
   const priceInput = document.getElementById('sob-calc-price');
   const montoInput = document.getElementById('sob-calc-monto');
+  const arancelInput = document.getElementById('sob-calc-arancel');
+  const impuestosInput = document.getElementById('sob-calc-impuestos');
   const tirDisplay = document.getElementById('sob-calc-tir');
   const durDisplay = document.getElementById('sob-calc-duration');
   function recalcSob() {
     const newPrice = parseFloat(priceInput.value);
     if (!newPrice || newPrice <= 0) return;
+    const arancel = parseFloat(arancelInput.value) || 0;
+    const impuestos = parseFloat(impuestosInput.value) || 0;
+    const costosPct = (arancel + impuestos) / 100;
+    const effectivePrice = newPrice * (1 + costosPct);
     const today = new Date();
-    const newYtm = calcYTM(newPrice, item.flujos, today);
-    const newDur = calcDuration(newPrice, item.flujos, today, newYtm);
+    const newYtm = calcYTM(effectivePrice, item.flujos, today);
+    const newDur = calcDuration(effectivePrice, item.flujos, today, newYtm);
     if (isFinite(newYtm)) { tirDisplay.textContent = newYtm.toFixed(2) + '%'; tirDisplay.style.color = newYtm >= 0 ? 'var(--green)' : 'var(--red)'; }
     if (isFinite(newDur)) { durDisplay.textContent = newDur.toFixed(2) + ' años'; }
     renderSobFlows();
   }
   priceInput.addEventListener('input', recalcSob);
   montoInput.addEventListener('input', renderSobFlows);
+  arancelInput.addEventListener('input', recalcSob);
+  impuestosInput.addEventListener('input', recalcSob);
+  recalcSob(); // initial calc with costs
 }
 
 let soberanosChart = null;
@@ -1752,7 +1885,7 @@ function openCERCalculator(item) {
         <button class="mundo-modal-close">&times;</button>
       </div>
       <div class="mundo-modal-body" style="padding:16px">
-        <div style="display:flex;gap:20px;align-items:center;flex-wrap:wrap;margin-bottom:16px">
+        <div style="display:flex;gap:20px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
           <div><label style="font-size:0.8rem;color:var(--text-secondary)">Precio (AR$)</label>
             <input type="number" id="cer-calc-price" value="${item.priceArs.toFixed(2)}" step="0.01" style="${inputStyle}"></div>
           <div><label style="font-size:0.8rem;color:var(--text-secondary)">Monto a invertir ($)</label>
@@ -1761,6 +1894,13 @@ function openCERCalculator(item) {
             <div id="cer-calc-tir" style="font-size:1.5rem;font-weight:700;color:${item.ytm >= 0 ? 'var(--green)' : 'var(--red)'}">${item.ytm.toFixed(2)}%</div></div>
           <div><label style="font-size:0.8rem;color:var(--text-secondary)">Duration</label>
             <div id="cer-calc-duration" style="font-size:1.2rem;font-weight:600;color:var(--text)">${item.duration.toFixed(1)} años</div></div>
+        </div>
+        <div style="display:flex;gap:16px;align-items:center;margin-bottom:16px;flex-wrap:wrap;padding:8px 12px;background:var(--bg-subtle);border-radius:6px">
+          <span style="font-size:0.75rem;color:var(--text-secondary);font-weight:600">Costos:</span>
+          <div style="display:flex;align-items:center;gap:4px"><label style="font-size:0.75rem;color:var(--text-secondary)">Arancel %</label>
+            <input type="number" id="cer-calc-arancel" value="0.45" step="0.01" style="width:70px;padding:4px 6px;font-size:0.85rem;font-weight:600;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text)"></div>
+          <div style="display:flex;align-items:center;gap:4px"><label style="font-size:0.75rem;color:var(--text-secondary)">Impuestos %</label>
+            <input type="number" id="cer-calc-impuestos" value="0.01" step="0.01" style="width:70px;padding:4px 6px;font-size:0.85rem;font-weight:600;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text)"></div>
         </div>
         <div id="cer-calc-resumen"></div>
       </div>
@@ -1771,8 +1911,12 @@ function openCERCalculator(item) {
 
   function renderCERResumen() {
     const price = parseFloat(document.getElementById('cer-calc-price').value) || item.priceArs;
+    const arancel = parseFloat(document.getElementById('cer-calc-arancel').value) || 0;
+    const impuestos = parseFloat(document.getElementById('cer-calc-impuestos').value) || 0;
+    const costosPct = (arancel + impuestos) / 100;
+    const effectivePrice = price * (1 + costosPct);
     const monto = parseFloat(document.getElementById('cer-calc-monto').value) || 1000000;
-    const pricePer1VN = price / 100; // precio es por 100 VN
+    const pricePer1VN = effectivePrice / 100; // precio es por 100 VN (con costos)
     const nominales = monto / pricePer1VN; // VN comprados
     // Show adjusted flows if available (flujos are per 1 VN)
     const flujos = item.flujosAjustados || [];
@@ -1806,6 +1950,8 @@ function openCERCalculator(item) {
   renderCERResumen();
   document.getElementById('cer-calc-price').addEventListener('input', renderCERResumen);
   document.getElementById('cer-calc-monto').addEventListener('input', renderCERResumen);
+  document.getElementById('cer-calc-arancel').addEventListener('input', renderCERResumen);
+  document.getElementById('cer-calc-impuestos').addEventListener('input', renderCERResumen);
 }
 
 let cerChart = null;
@@ -1996,7 +2142,7 @@ function openONCalculator(item) {
         <button class="mundo-modal-close">&times;</button>
       </div>
       <div class="mundo-modal-body" style="padding:16px">
-        <div style="display:flex;gap:20px;align-items:center;margin-bottom:16px;flex-wrap:wrap">
+        <div style="display:flex;gap:20px;align-items:center;margin-bottom:12px;flex-wrap:wrap">
           <div><label style="font-size:0.8rem;color:var(--text-secondary)">Precio USD</label>
             <input type="number" id="on-calc-price" value="${item.priceUSD.toFixed(2)}" step="0.01" style="${inputStyle}"></div>
           <div><label style="font-size:0.8rem;color:var(--text-secondary)">Monto a invertir (USD)</label>
@@ -2005,6 +2151,13 @@ function openONCalculator(item) {
             <div id="on-calc-tir" style="font-size:1.5rem;font-weight:700;color:${item.ytm >= 0 ? 'var(--green)' : 'var(--red)'}">${item.ytm.toFixed(2)}%</div></div>
           <div><label style="font-size:0.8rem;color:var(--text-secondary)">Duration</label>
             <div id="on-calc-duration" style="font-size:1.2rem;font-weight:600;color:var(--text)">${item.duration.toFixed(2)} años</div></div>
+        </div>
+        <div style="display:flex;gap:16px;align-items:center;margin-bottom:16px;flex-wrap:wrap;padding:8px 12px;background:var(--bg-subtle);border-radius:6px">
+          <span style="font-size:0.75rem;color:var(--text-secondary);font-weight:600">Costos:</span>
+          <div style="display:flex;align-items:center;gap:4px"><label style="font-size:0.75rem;color:var(--text-secondary)">Arancel %</label>
+            <input type="number" id="on-calc-arancel" value="0.45" step="0.01" style="width:70px;padding:4px 6px;font-size:0.85rem;font-weight:600;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text)"></div>
+          <div style="display:flex;align-items:center;gap:4px"><label style="font-size:0.75rem;color:var(--text-secondary)">Impuestos %</label>
+            <input type="number" id="on-calc-impuestos" value="0.01" step="0.01" style="width:70px;padding:4px 6px;font-size:0.85rem;font-weight:600;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text)"></div>
         </div>
         <h4 style="margin:12px 0 8px;font-size:0.85rem;color:var(--text-secondary)">Flujos de fondos</h4>
         <div id="on-calc-flows"></div>
@@ -2016,8 +2169,12 @@ function openONCalculator(item) {
 
   function renderONFlows() {
     const price = parseFloat(document.getElementById('on-calc-price').value) || item.priceUSD;
+    const arancel = parseFloat(document.getElementById('on-calc-arancel').value) || 0;
+    const impuestos = parseFloat(document.getElementById('on-calc-impuestos').value) || 0;
+    const costosPct = (arancel + impuestos) / 100;
+    const effectivePrice = price * (1 + costosPct);
     const monto = parseFloat(document.getElementById('on-calc-monto').value) || 10000;
-    const pricePer1VN = price / 100; // precio por 1 VN
+    const pricePer1VN = effectivePrice / 100; // precio por 1 VN (con costos)
     const nominales = monto / pricePer1VN; // VN comprados
     const scale = nominales; // flujos son por 1 VN, multiplicar por cantidad de VN
     const flowsHTML = item.flujos.map(f => {
@@ -2048,20 +2205,29 @@ function openONCalculator(item) {
 
   const priceInput = document.getElementById('on-calc-price');
   const montoInput = document.getElementById('on-calc-monto');
+  const arancelInput = document.getElementById('on-calc-arancel');
+  const impuestosInput = document.getElementById('on-calc-impuestos');
   const tirDisplay = document.getElementById('on-calc-tir');
   const durDisplay = document.getElementById('on-calc-duration');
   function recalc() {
     const newPrice = parseFloat(priceInput.value);
     if (!newPrice || newPrice <= 0) return;
+    const arancel = parseFloat(arancelInput.value) || 0;
+    const impuestos = parseFloat(impuestosInput.value) || 0;
+    const costosPct = (arancel + impuestos) / 100;
+    const effectivePrice = (newPrice / 100) * (1 + costosPct);
     const today = new Date();
-    const newYtm = calcYTM(newPrice / 100, item.flujos, today);
-    const newDur = calcDuration(newPrice / 100, item.flujos, today, newYtm);
+    const newYtm = calcYTM(effectivePrice, item.flujos, today);
+    const newDur = calcDuration(effectivePrice, item.flujos, today, newYtm);
     if (isFinite(newYtm)) { tirDisplay.textContent = newYtm.toFixed(2) + '%'; tirDisplay.style.color = newYtm >= 0 ? 'var(--green)' : 'var(--red)'; }
     if (isFinite(newDur)) { durDisplay.textContent = newDur.toFixed(2) + ' años'; }
     renderONFlows();
   }
   priceInput.addEventListener('input', recalc);
   montoInput.addEventListener('input', renderONFlows);
+  arancelInput.addEventListener('input', recalc);
+  impuestosInput.addEventListener('input', recalc);
+  recalc(); // initial calc with costs
 }
 
 // ─── Generic sortable table ───
@@ -2110,7 +2276,7 @@ function openLecapCalculator(item) {
         <button class="mundo-modal-close">&times;</button>
       </div>
       <div class="mundo-modal-body" style="padding:16px">
-        <div style="display:flex;gap:20px;align-items:center;flex-wrap:wrap;margin-bottom:16px">
+        <div style="display:flex;gap:20px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
           <div><label style="font-size:0.8rem;color:var(--text-secondary)">Precio</label>
             <input type="number" id="lecap-calc-price" value="${item.precio.toFixed(2)}" step="0.01" style="${inputStyle}"></div>
           <div><label style="font-size:0.8rem;color:var(--text-secondary)">Monto a invertir ($)</label>
@@ -2122,6 +2288,13 @@ function openLecapCalculator(item) {
           <div><label style="font-size:0.8rem;color:var(--text-secondary)">Días</label>
             <div style="font-size:1.2rem;font-weight:600;color:var(--text)">${item.dias}</div></div>
         </div>
+        <div style="display:flex;gap:16px;align-items:center;margin-bottom:16px;flex-wrap:wrap;padding:8px 12px;background:var(--bg-subtle);border-radius:6px">
+          <span style="font-size:0.75rem;color:var(--text-secondary);font-weight:600">Costos:</span>
+          <div style="display:flex;align-items:center;gap:4px"><label style="font-size:0.75rem;color:var(--text-secondary)">Arancel %</label>
+            <input type="number" id="lecap-calc-arancel" value="0.10" step="0.01" style="width:70px;padding:4px 6px;font-size:0.85rem;font-weight:600;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text)"></div>
+          <div style="display:flex;align-items:center;gap:4px"><label style="font-size:0.75rem;color:var(--text-secondary)">Impuestos %</label>
+            <input type="number" id="lecap-calc-impuestos" value="0.01" step="0.01" style="width:70px;padding:4px 6px;font-size:0.85rem;font-weight:600;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text)"></div>
+        </div>
         <div id="lecap-calc-resumen"></div>
       </div>
     </div>`;
@@ -2131,8 +2304,12 @@ function openLecapCalculator(item) {
 
   function renderLecapResumen() {
     const price = parseFloat(document.getElementById('lecap-calc-price').value) || item.precio;
+    const arancel = parseFloat(document.getElementById('lecap-calc-arancel').value) || 0;
+    const impuestos = parseFloat(document.getElementById('lecap-calc-impuestos').value) || 0;
+    const costosPct = (arancel + impuestos) / 100;
+    const effectivePrice = price * (1 + costosPct);
     const monto = parseFloat(document.getElementById('lecap-calc-monto').value) || 1000000;
-    const nominales = monto / price * 100; // VN comprados (precio es por 100 VN)
+    const nominales = monto / effectivePrice * 100; // VN comprados (precio efectivo con costos)
     const cobro = nominales / 100 * item.pago_final;
     const ganancia = cobro - monto;
     document.getElementById('lecap-calc-resumen').innerHTML = `
@@ -2149,8 +2326,12 @@ function openLecapCalculator(item) {
   function recalcLecap() {
     const p = parseFloat(document.getElementById('lecap-calc-price').value);
     if (!p || p <= 0) return;
-    const tna = (item.pago_final / p - 1) * (365 / item.dias) * 100;
-    const tir = (Math.pow(item.pago_final / p, 365 / item.dias) - 1) * 100;
+    const arancel = parseFloat(document.getElementById('lecap-calc-arancel').value) || 0;
+    const impuestos = parseFloat(document.getElementById('lecap-calc-impuestos').value) || 0;
+    const costosPct = (arancel + impuestos) / 100;
+    const ep = p * (1 + costosPct); // precio efectivo con costos
+    const tna = (item.pago_final / ep - 1) * (365 / item.dias) * 100;
+    const tir = (Math.pow(item.pago_final / ep, 365 / item.dias) - 1) * 100;
     document.getElementById('lecap-calc-tna').textContent = tna.toFixed(2) + '%';
     const tirEl = document.getElementById('lecap-calc-tir');
     tirEl.textContent = tir.toFixed(2) + '%';
@@ -2159,4 +2340,719 @@ function openLecapCalculator(item) {
   }
   document.getElementById('lecap-calc-price').addEventListener('input', recalcLecap);
   document.getElementById('lecap-calc-monto').addEventListener('input', renderLecapResumen);
+  document.getElementById('lecap-calc-arancel').addEventListener('input', recalcLecap);
+  document.getElementById('lecap-calc-impuestos').addEventListener('input', recalcLecap);
+  recalcLecap(); // initial calc with costs
+}
+
+// ─── PORTFOLIO MODULE ───
+
+const MONTH_NAMES = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+
+const ASSET_TYPES = {
+  soberano: { label: 'Soberanos', emoji: '🏛️', currency: 'USD', qtyLabel: 'Valor Nominal (VN)' },
+  on: { label: 'ONs', emoji: '🏢', currency: 'USD', qtyLabel: 'Valor Nominal (VN)' },
+  cer: { label: 'Bonos CER', emoji: '📊', currency: 'ARS', qtyLabel: 'Valor Nominal (VN)' },
+  lecap: { label: 'LECAPs', emoji: '📈', currency: 'ARS', qtyLabel: 'Valor Nominal (VN)' },
+  fci: { label: 'FCIs', emoji: '💰', currency: 'ARS', qtyLabel: 'Cuotapartes' },
+  garantizado: { label: 'Billeteras', emoji: '🏦', currency: 'ARS', qtyLabel: 'Monto (ARS)' },
+  cash: { label: 'Cash', emoji: '💵', currency: 'USD', qtyLabel: 'Monto' },
+  custom: { label: 'Otro', emoji: '⭐', currency: 'USD', qtyLabel: 'Cantidad' },
+};
+
+let _portfolioHoldings = [];
+let _portfolioPrices = {};
+let _portfolioLoading = false;
+let _portfolioTC = null; // tipo de cambio implícito (AL30 ARS / AL30D USD)
+let _portfolioViewCurrency = 'split'; // 'split' | 'usd' | 'ars'
+
+async function getPortfolioConfig() {
+  if (_portfolioConfig) return _portfolioConfig;
+  const resp = await fetch('/api/config');
+  _portfolioConfig = await resp.json();
+  return _portfolioConfig;
+}
+
+function getTickersForType(config, type) {
+  switch (type) {
+    case 'soberano': return Object.keys(config.soberanos || {});
+    case 'on': return Object.keys(config.ons || {});
+    case 'cer': return Object.keys(config.bonos_cer || {});
+    case 'lecap': return (config.lecaps?.letras || []).filter(l => l.activo).map(l => l.ticker);
+    case 'fci': return (config.fcis || []).filter(f => f.activo).map(f => f.nombre);
+    case 'garantizado': return [...(config.garantizados || []), ...(config.especiales || [])].filter(g => g.activo).map(g => g.nombre);
+    case 'cash': return ['USD', 'ARS'];
+    case 'custom': return [];
+    default: return [];
+  }
+}
+
+async function loadPortfolio() {
+  if (!supabaseClient || !currentUser || _portfolioLoading) return;
+  _portfolioLoading = true;
+
+  const holdingsEl = document.getElementById('portfolio-holdings');
+  holdingsEl.innerHTML = '<div class="loading"><div class="loading-spinner"></div></div>';
+
+  try {
+    const { data, error } = await supabaseClient.from('holdings').select('*').order('created_at', { ascending: false });
+    if (error) throw error;
+    _portfolioHoldings = data || [];
+
+    const config = await getPortfolioConfig();
+    const [prices, tc] = await Promise.all([
+      fetchPortfolioPrices(_portfolioHoldings, config),
+      fetchTipoCambio(),
+    ]);
+    _portfolioPrices = prices;
+    _portfolioTC = tc;
+
+    renderPortfolioGreeting();
+    renderPortfolioTCToggle(config);
+    renderPortfolioSummary(config);
+    renderPortfolioHoldings(config);
+    renderPortfolioCashflows(config);
+  } catch (e) {
+    holdingsEl.innerHTML = `<p style="color:var(--red);font-size:0.85rem">Error cargando portfolio: ${e.message}</p>`;
+  }
+  _portfolioLoading = false;
+}
+
+async function fetchPortfolioPrices(holdings, config) {
+  const needs = new Set(holdings.map(h => h.asset_type));
+  const prices = {};
+  const fetches = [];
+
+  if (needs.has('soberano')) {
+    fetches.push(fetch('/api/soberanos').then(r => r.json()).then(d => {
+      for (const b of (d.data || [])) prices['soberano:' + b.symbol] = { price: parseFloat(b.c || b.price_usd || 0), currency: 'USD' };
+    }).catch(() => {}));
+  }
+  if (needs.has('on')) {
+    fetches.push(fetch('/api/ons').then(r => r.json()).then(d => {
+      for (const b of (d.data || [])) {
+        prices['on:' + b.symbol] = { price: parseFloat(b.c || 0), currency: 'USD' };
+        // Also store without D suffix so holdings match (MGCRD → MGCR)
+        const noD = b.symbol.endsWith('D') ? b.symbol.slice(0, -1) : b.symbol;
+        prices['on:' + noD] = { price: parseFloat(b.c || 0), currency: 'USD' };
+      }
+    }).catch(() => {}));
+  }
+  if (needs.has('lecap')) {
+    fetches.push(fetch('/api/lecaps').then(r => r.json()).then(d => {
+      for (const item of (d.data || [])) prices['lecap:' + item.symbol] = { price: parseFloat(item.c || item.price || 0), currency: 'ARS' };
+    }).catch(() => {}));
+  }
+  if (needs.has('cer')) {
+    fetches.push(fetch('/api/cer-precios').then(r => r.json()).then(d => {
+      for (const b of (d.data || [])) prices['cer:' + b.symbol] = { price: parseFloat(b.c || 0), currency: 'ARS' };
+    }).catch(() => {}));
+  }
+  // FCIs and garantizados: use config TNA (no market price per se)
+  if (needs.has('garantizado')) {
+    const all = [...(config.garantizados || []), ...(config.especiales || [])];
+    for (const g of all) prices['garantizado:' + g.nombre] = { tna: g.tna, currency: 'ARS' };
+  }
+
+  await Promise.all(fetches);
+  return prices;
+}
+
+async function fetchTipoCambio() {
+  try {
+    // Fetch all bonds from data912 via cer-precios (which hits arg_bonds) - it has both ARS and USD tickers
+    const resp = await fetch('https://data912.com/live/arg_bonds');
+    const raw = await resp.json();
+    const bonds = Array.isArray(raw) ? raw : [];
+    const al30ars = bonds.find(b => b.symbol === 'AL30');
+    const al30usd = bonds.find(b => b.symbol === 'AL30D');
+    if (al30ars && al30usd) {
+      const arsPrice = parseFloat(al30ars.c || 0);
+      const usdPrice = parseFloat(al30usd.c || 0);
+      if (usdPrice > 0 && arsPrice > 0) return arsPrice / usdPrice;
+    }
+  } catch (e) { /* ignore */ }
+  return null;
+}
+
+function renderPortfolioGreeting() {
+  const el = document.getElementById('portfolio-greeting');
+  if (!el || !currentUser) return;
+  const name = (currentUser.user_metadata?.full_name || currentUser.email || '').split(' ')[0];
+  const hour = new Date().getHours();
+  let saludo = 'Buenas noches';
+  if (hour >= 6 && hour < 12) saludo = 'Buenos días';
+  else if (hour >= 12 && hour < 19) saludo = 'Buenas tardes';
+  el.innerHTML = `
+    <h2 style="font-size:1.6rem;margin:0">${saludo}, ${name} 👋</h2>
+    <p style="color:var(--text-tertiary);font-size:0.82rem;margin-top:4px">Gracias por usar rendimientos.co — hecho con mucho ❤️ desde Argentina 🇦🇷. Parece que HTML funciona 😂</p>`;
+}
+
+function renderPortfolioTCToggle(config) {
+  const el = document.getElementById('portfolio-tc-toggle');
+  if (!el) return;
+  const tcStr = _portfolioTC ? `TC: $${_portfolioTC.toLocaleString('es-AR', {maximumFractionDigits:0})}` : '';
+  el.innerHTML = `
+    <button class="portfolio-tc-btn ${_portfolioViewCurrency === 'split' ? 'active' : ''}" data-vc="split">USD + ARS</button>
+    <button class="portfolio-tc-btn ${_portfolioViewCurrency === 'usd' ? 'active' : ''}" data-vc="usd">Todo USD</button>
+    <button class="portfolio-tc-btn ${_portfolioViewCurrency === 'ars' ? 'active' : ''}" data-vc="ars">Todo ARS</button>
+    ${tcStr ? `<span style="font-size:0.65rem;color:var(--text-tertiary);padding:4px 8px">${tcStr}</span>` : ''}`;
+  el.querySelectorAll('.portfolio-tc-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      _portfolioViewCurrency = btn.dataset.vc;
+      renderPortfolioTCToggle(config);
+      renderPortfolioSummary(config);
+      renderPortfolioHoldings(config);
+    });
+  });
+}
+
+function getHoldingValue(holding, config) {
+  const key = holding.asset_type + ':' + holding.ticker;
+  const priceData = _portfolioPrices[key];
+  const qty = parseFloat(holding.quantity) || 0;
+  const purchasePrice = parseFloat(holding.purchase_price) || 0;
+
+  if (holding.asset_type === 'cash') {
+    const curr = holding.ticker === 'USD' ? 'USD' : 'ARS';
+    return { currentPrice: null, value: qty, pnl: 0, currency: curr };
+  }
+  if (holding.asset_type === 'custom') {
+    const curr = (holding.metadata?.currency) || 'USD';
+    const manualPrice = parseFloat(holding.metadata?.current_price) || purchasePrice;
+    const value = qty * manualPrice;
+    const cost = qty * purchasePrice;
+    return { currentPrice: manualPrice, value, cost, pnl: value - cost, currency: curr };
+  }
+  if (holding.asset_type === 'garantizado') {
+    return { currentPrice: null, value: qty, pnl: 0, currency: 'ARS', tna: priceData?.tna };
+  }
+  if (holding.asset_type === 'fci') {
+    // FCIs: qty = cuotapartes, price = NAV per cuotaparte
+    // We don't have live NAV per holding easily, just show purchase value
+    return { currentPrice: null, value: qty * purchasePrice, pnl: 0, currency: 'ARS' };
+  }
+
+  const currentPrice = priceData?.price || 0;
+  const currency = priceData?.currency || ASSET_TYPES[holding.asset_type]?.currency || 'USD';
+
+  // No live price available
+  if (!currentPrice) {
+    const cost = (purchasePrice / 100) * qty;
+    return { currentPrice: null, value: cost, cost, pnl: null, currency, noPrice: true };
+  }
+
+  // For bonds: qty = VN, price is per 100 VN
+  const value = (currentPrice / 100) * qty;
+  const cost = (purchasePrice / 100) * qty;
+
+  return { currentPrice, value, cost, pnl: value - cost, currency };
+}
+
+function fmtMoney(amount, currency) {
+  const sym = currency === 'USD' ? 'US$' : '$';
+  // Use compact notation for very large numbers
+  if (Math.abs(amount) >= 1e9) return sym + (amount / 1e9).toLocaleString('es-AR', {minimumFractionDigits:1, maximumFractionDigits:1}) + 'B';
+  if (Math.abs(amount) >= 1e6) return sym + (amount / 1e6).toLocaleString('es-AR', {minimumFractionDigits:1, maximumFractionDigits:1}) + 'M';
+  return sym + amount.toLocaleString('es-AR', {minimumFractionDigits:2, maximumFractionDigits:2});
+}
+
+function renderPortfolioSummary(config) {
+  const summary = document.getElementById('portfolio-summary');
+  if (_portfolioHoldings.length === 0) {
+    summary.innerHTML = '';
+    return;
+  }
+
+  let totalUSD = 0, totalARS = 0, pnlUSD = 0, pnlARS = 0;
+  for (const h of _portfolioHoldings) {
+    const v = getHoldingValue(h, config);
+    if (v.noPrice) continue; // skip holdings without live price
+    if (v.currency === 'USD') { totalUSD += v.value; pnlUSD += v.pnl || 0; }
+    else { totalARS += v.value; pnlARS += v.pnl || 0; }
+  }
+
+  const tc = _portfolioTC || 0;
+  const vc = _portfolioViewCurrency;
+  let cards = '';
+
+  if (vc === 'split') {
+    cards = `
+      <div class="portfolio-summary-card"><div class="label">Valor USD</div><div class="value">${fmtMoney(totalUSD, 'USD')}</div></div>
+      <div class="portfolio-summary-card"><div class="label">Valor ARS</div><div class="value">${fmtMoney(totalARS, 'ARS')}</div></div>
+      <div class="portfolio-summary-card"><div class="label">P&L USD</div><div class="value" style="color:${pnlUSD >= 0 ? 'var(--green)' : 'var(--red)'}">${pnlUSD >= 0 ? '+' : ''}${fmtMoney(pnlUSD, 'USD')}</div></div>
+      <div class="portfolio-summary-card"><div class="label">P&L ARS</div><div class="value" style="color:${pnlARS >= 0 ? 'var(--green)' : 'var(--red)'}">${pnlARS >= 0 ? '+' : ''}${fmtMoney(pnlARS, 'ARS')}</div></div>`;
+  } else if (vc === 'usd' && tc) {
+    const total = totalUSD + totalARS / tc;
+    const pnl = pnlUSD + pnlARS / tc;
+    cards = `
+      <div class="portfolio-summary-card"><div class="label">Valor Total</div><div class="value">${fmtMoney(total, 'USD')}</div></div>
+      <div class="portfolio-summary-card"><div class="label">P&L Total</div><div class="value" style="color:${pnl >= 0 ? 'var(--green)' : 'var(--red)'}">${pnl >= 0 ? '+' : ''}${fmtMoney(pnl, 'USD')}</div></div>
+      <div class="portfolio-summary-card"><div class="label">USD</div><div class="value">${fmtMoney(totalUSD, 'USD')}</div></div>
+      <div class="portfolio-summary-card"><div class="label">ARS → USD</div><div class="value">${fmtMoney(totalARS / tc, 'USD')}</div></div>`;
+  } else if (vc === 'ars' && tc) {
+    const total = totalARS + totalUSD * tc;
+    const pnl = pnlARS + pnlUSD * tc;
+    cards = `
+      <div class="portfolio-summary-card"><div class="label">Valor Total</div><div class="value">${fmtMoney(total, 'ARS')}</div></div>
+      <div class="portfolio-summary-card"><div class="label">P&L Total</div><div class="value" style="color:${pnl >= 0 ? 'var(--green)' : 'var(--red)'}">${pnl >= 0 ? '+' : ''}${fmtMoney(pnl, 'ARS')}</div></div>
+      <div class="portfolio-summary-card"><div class="label">ARS</div><div class="value">${fmtMoney(totalARS, 'ARS')}</div></div>
+      <div class="portfolio-summary-card"><div class="label">USD → ARS</div><div class="value">${fmtMoney(totalUSD * tc, 'ARS')}</div></div>`;
+  } // else: split cards already set above
+
+  // Big total number
+  let totalHTML = '';
+  if (tc) {
+    const totalEnUSD = totalUSD + totalARS / tc;
+    const totalEnARS = totalARS + totalUSD * tc;
+    const pnlEnUSD = pnlUSD + pnlARS / tc;
+    const pnlEnARS = pnlARS + pnlUSD * tc;
+    const showARS = vc === 'ars';
+    const grandTotal = showARS ? totalEnARS : totalEnUSD;
+    const grandPnl = showARS ? pnlEnARS : pnlEnUSD;
+    const grandCurr = showARS ? 'ARS' : 'USD';
+    const pnlTotalColor = grandPnl >= 0 ? 'var(--green)' : 'var(--red)';
+    totalHTML = `
+      <div style="margin-bottom:16px">
+        <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-tertiary);font-weight:600">Valor total del portfolio</div>
+        <div style="font-size:2.4rem;font-weight:800;color:var(--text);line-height:1.2">${fmtMoney(grandTotal, grandCurr)}</div>
+        <div style="font-size:1rem;font-weight:600;color:${pnlTotalColor}">${grandPnl >= 0 ? '+' : ''}${fmtMoney(grandPnl, grandCurr)} P&L</div>
+      </div>`;
+  }
+
+  summary.innerHTML = `${totalHTML}<div class="portfolio-summary-grid">${cards}</div>`;
+}
+
+function renderPortfolioHoldings(config) {
+  const container = document.getElementById('portfolio-holdings');
+  if (_portfolioHoldings.length === 0) {
+    container.innerHTML = `
+      <div class="portfolio-empty">
+        <div class="emoji">📭</div>
+        <p>No tenés activos en tu portfolio.</p>
+        <p style="margin-top:8px;font-size:0.8rem">Hacé click en <strong>+ Agregar activo</strong> para empezar.</p>
+      </div>`;
+    return;
+  }
+
+  const rows = _portfolioHoldings.map(h => {
+    const typeInfo = ASSET_TYPES[h.asset_type] || {};
+    const v = getHoldingValue(h, config);
+    const pnlColor = v.pnl != null && v.pnl >= 0 ? 'var(--green)' : v.pnl != null ? 'var(--red)' : 'var(--text-tertiary)';
+    const currSymbol = v.currency === 'USD' ? 'US$' : '$';
+    const priceStr = v.currentPrice != null ? `${currSymbol}${v.currentPrice.toFixed(2)}` : '<span style="color:var(--text-tertiary)">Sin precio</span>';
+    const valueStr = v.noPrice ? '—' : fmtMoney(v.value, v.currency);
+    const pnlStr = v.pnl != null ? `${v.pnl >= 0 ? '+' : ''}${fmtMoney(v.pnl, v.currency)}` : '—';
+    const qty = parseFloat(h.quantity);
+    const qtyStr = h.asset_type === 'garantizado' ? `$${qty.toLocaleString('es-AR')}` : qty.toLocaleString('es-AR');
+
+    return `<tr>
+      <td><strong>${h.ticker}</strong><br><span style="font-size:0.7rem;color:var(--text-tertiary)">${typeInfo.label || h.asset_type}</span></td>
+      <td>${qtyStr}</td>
+      <td>${currSymbol}${parseFloat(h.purchase_price).toFixed(2)}</td>
+      <td>${priceStr}</td>
+      <td style="color:${pnlColor};font-weight:600">${pnlStr}</td>
+      <td style="font-weight:700">${valueStr}</td>
+      <td class="col-actions">
+        <button onclick="editHolding('${h.id}')" title="Editar">✏️</button>
+        <button onclick="deleteHolding('${h.id}')" title="Eliminar">🗑️</button>
+      </td>
+    </tr>`;
+  }).join('');
+
+  container.innerHTML = `
+    <table class="portfolio-table">
+      <thead><tr>
+        <th>Activo</th><th>Cantidad</th><th>P.Compra</th><th>P.Actual</th><th>P&L</th><th>Valor</th><th></th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+  makeSortable(container.querySelector('.portfolio-table'));
+}
+
+// ─── Add/Edit Holding Modal ───
+
+function openAddHoldingModal(editId) {
+  const isEdit = typeof editId === 'string' && editId.length > 10;
+  const existing = isEdit ? _portfolioHoldings.find(h => h.id === editId) : null;
+
+  document.querySelector('.mundo-modal-overlay')?.remove();
+  const overlay = document.createElement('div');
+  overlay.className = 'mundo-modal-overlay';
+  overlay.innerHTML = `
+    <div class="mundo-modal" style="max-width:420px">
+      <div class="mundo-modal-header">
+        <h3 style="margin:0">${isEdit ? 'Editar' : 'Agregar'} activo</h3>
+        <button class="mundo-modal-close">&times;</button>
+      </div>
+      <div class="mundo-modal-body" style="padding:16px">
+        <div id="modal-step1">
+          <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:12px">Tipo de activo</p>
+          <div class="portfolio-type-grid">
+            ${Object.entries(ASSET_TYPES).map(([key, t]) => `
+              <button class="portfolio-type-btn ${existing?.asset_type === key ? 'selected' : ''}" data-type="${key}">
+                <span class="emoji">${t.emoji}</span>${t.label}
+              </button>`).join('')}
+          </div>
+        </div>
+        <div id="modal-step2" style="display:none">
+          <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:8px">Elegí el activo</p>
+          <select id="modal-ticker" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:6px;font-size:0.85rem;font-family:var(--font);background:var(--card-bg);color:var(--text)"></select>
+          <div style="margin-top:16px;display:flex;flex-direction:column;gap:12px">
+            <div>
+              <label style="font-size:0.8rem;color:var(--text-secondary)" id="modal-qty-label">Cantidad</label>
+              <input type="number" id="modal-qty" value="${existing ? existing.quantity : ''}" step="any" style="display:block;width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:6px;font-size:0.95rem;font-weight:600;font-family:var(--font);background:var(--bg);color:var(--text)">
+            </div>
+            <div>
+              <label style="font-size:0.8rem;color:var(--text-secondary)">Precio de compra <span id="modal-price-hint" style="color:var(--text-tertiary)">(por 100 VN)</span></label>
+              <input type="number" id="modal-price" value="${existing ? existing.purchase_price : ''}" step="any" placeholder="Ej: 62.50" style="display:block;width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:6px;font-size:0.95rem;font-weight:600;font-family:var(--font);background:var(--bg);color:var(--text)">
+              <p id="modal-price-example" style="font-size:0.7rem;color:var(--text-tertiary);margin-top:4px">Precio en la moneda del activo, por cada 100 VN. Ej: AL30 a US$62.50</p>
+            </div>
+            <div>
+              <label style="font-size:0.8rem;color:var(--text-secondary)">Fecha de compra</label>
+              <input type="date" id="modal-date" value="${existing ? existing.purchase_date : new Date().toISOString().slice(0,10)}" style="display:block;width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:6px;font-size:0.85rem;font-family:var(--font);background:var(--bg);color:var(--text)">
+            </div>
+          </div>
+          <button id="modal-save" style="margin-top:16px;width:100%;padding:10px;background:var(--accent);color:#fff;border:none;border-radius:6px;font-size:0.9rem;font-weight:600;cursor:pointer;font-family:var(--font)">
+            ${isEdit ? 'Guardar cambios' : 'Agregar al portfolio'}
+          </button>
+          <p id="modal-error" style="color:var(--red);font-size:0.8rem;margin-top:8px;display:none"></p>
+        </div>
+      </div>
+    </div>`;
+
+  document.body.appendChild(overlay);
+  overlay.querySelector('.mundo-modal-close').addEventListener('click', () => overlay.remove());
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+
+  let selectedType = existing?.asset_type || null;
+
+  async function showStep2(type) {
+    selectedType = type;
+    overlay.querySelectorAll('.portfolio-type-btn').forEach(b => b.classList.toggle('selected', b.dataset.type === type));
+    const config = await getPortfolioConfig();
+    const tickers = getTickersForType(config, type);
+    const select = overlay.querySelector('#modal-ticker');
+    const step2 = overlay.querySelector('#modal-step2');
+
+    // Remove custom fields if they exist
+    overlay.querySelector('#modal-custom-fields')?.remove();
+
+    if (type === 'cash') {
+      select.innerHTML = '<option value="USD">Dólares (USD)</option><option value="ARS">Pesos (ARS)</option>';
+      if (existing) select.value = existing.ticker;
+      overlay.querySelector('#modal-qty-label').textContent = 'Monto';
+      overlay.querySelector('#modal-price-hint').textContent = '(no aplica)';
+      overlay.querySelector('#modal-price-example').textContent = 'Para cash poné 1 como precio';
+      overlay.querySelector('#modal-price').placeholder = '1';
+      overlay.querySelector('#modal-price').value = existing ? existing.purchase_price : '1';
+    } else if (type === 'custom') {
+      select.innerHTML = '<option value="">Escribí el nombre abajo</option>';
+      // Add custom fields: name, currency, current price
+      const customHTML = `<div id="modal-custom-fields" style="margin-top:12px;display:flex;flex-direction:column;gap:12px">
+        <div><label style="font-size:0.8rem;color:var(--text-secondary)">Nombre del activo</label>
+          <input type="text" id="modal-custom-name" value="${existing?.ticker || ''}" placeholder="Ej: Bitcoin, AAPL, Ethereum" style="display:block;width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:6px;font-size:0.95rem;font-weight:600;font-family:var(--font);background:var(--bg);color:var(--text)"></div>
+        <div><label style="font-size:0.8rem;color:var(--text-secondary)">Moneda</label>
+          <select id="modal-custom-currency" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:6px;font-size:0.85rem;font-family:var(--font);background:var(--card-bg);color:var(--text)">
+            <option value="USD" ${existing?.metadata?.currency === 'USD' || !existing ? 'selected' : ''}>USD</option>
+            <option value="ARS" ${existing?.metadata?.currency === 'ARS' ? 'selected' : ''}>ARS</option>
+          </select></div>
+        <div><label style="font-size:0.8rem;color:var(--text-secondary)">Precio actual (opcional, para calcular P&L)</label>
+          <input type="number" id="modal-custom-current-price" value="${existing?.metadata?.current_price || ''}" placeholder="Ej: 70000" step="any" style="display:block;width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:6px;font-size:0.95rem;font-weight:600;font-family:var(--font);background:var(--bg);color:var(--text)"></div>
+      </div>`;
+      select.style.display = 'none';
+      select.insertAdjacentHTML('afterend', customHTML);
+      overlay.querySelector('#modal-qty-label').textContent = 'Cantidad';
+      overlay.querySelector('#modal-price-hint').textContent = '(precio de compra por unidad)';
+      overlay.querySelector('#modal-price-example').textContent = 'Precio al que compraste cada unidad';
+      overlay.querySelector('#modal-price').placeholder = 'Ej: 65000';
+    } else {
+      select.style.display = '';
+      select.innerHTML = tickers.map(t => `<option value="${t}" ${existing?.ticker === t ? 'selected' : ''}>${t}</option>`).join('');
+      overlay.querySelector('#modal-qty-label').textContent = ASSET_TYPES[type]?.qtyLabel || 'Cantidad';
+      const priceHints = {
+        soberano: { hint: '(USD por 100 VN)', example: 'Precio en USD por cada 100 VN. Ej: AL30 a US$62.50', placeholder: 'Ej: 62.50' },
+        on: { hint: '(USD por 100 VN)', example: 'Precio en USD por cada 100 VN. Ej: BACG a US$102.50', placeholder: 'Ej: 102.50' },
+        cer: { hint: '(ARS por 100 VN)', example: 'Precio en ARS por cada 100 VN. Ej: TX26 a $110.25', placeholder: 'Ej: 110.25' },
+        lecap: { hint: '(ARS por 100 VN)', example: 'Precio en ARS por cada 100 VN. Ej: S17A6 a $108.40', placeholder: 'Ej: 108.40' },
+        fci: { hint: '(por cuotaparte)', example: 'Valor de la cuotaparte al momento de compra', placeholder: 'Ej: 5250.00' },
+        garantizado: { hint: '(no aplica)', example: 'Para billeteras no se usa precio de compra, poné 1', placeholder: '1' },
+      };
+      const ph = priceHints[type] || {};
+      overlay.querySelector('#modal-price-hint').textContent = ph.hint || '';
+      overlay.querySelector('#modal-price-example').textContent = ph.example || '';
+      overlay.querySelector('#modal-price').placeholder = ph.placeholder || '';
+    }
+    step2.style.display = '';
+  }
+
+  overlay.querySelectorAll('.portfolio-type-btn').forEach(btn => {
+    btn.addEventListener('click', () => showStep2(btn.dataset.type));
+  });
+
+  if (existing) showStep2(existing.asset_type);
+
+  overlay.querySelector('#modal-save').addEventListener('click', async () => {
+    let ticker = overlay.querySelector('#modal-ticker').value;
+    const qty = parseFloat(overlay.querySelector('#modal-qty').value);
+    const price = parseFloat(overlay.querySelector('#modal-price').value);
+    const date = overlay.querySelector('#modal-date').value;
+    const errorEl = overlay.querySelector('#modal-error');
+
+    let metadata = {};
+    if (selectedType === 'custom') {
+      ticker = overlay.querySelector('#modal-custom-name')?.value?.trim() || '';
+      const curr = overlay.querySelector('#modal-custom-currency')?.value || 'USD';
+      const curPrice = parseFloat(overlay.querySelector('#modal-custom-current-price')?.value) || 0;
+      metadata = { currency: curr, current_price: curPrice || null };
+    }
+
+    if (!selectedType || !ticker || !qty || !date) {
+      errorEl.textContent = 'Completá todos los campos';
+      errorEl.style.display = '';
+      return;
+    }
+    if (selectedType !== 'cash' && !price) {
+      errorEl.textContent = 'Completá el precio de compra';
+      errorEl.style.display = '';
+      return;
+    }
+
+    // ─── Input validation (defense in depth) ───
+    const VALID_TYPES = ['soberano', 'on', 'cer', 'lecap', 'fci', 'garantizado', 'cash', 'custom'];
+    if (!VALID_TYPES.includes(selectedType)) {
+      errorEl.textContent = 'Tipo de activo inválido';
+      errorEl.style.display = '';
+      return;
+    }
+    if (ticker.length > 50) {
+      errorEl.textContent = 'Ticker demasiado largo';
+      errorEl.style.display = '';
+      return;
+    }
+    if (qty <= 0 || qty > 1e12) {
+      errorEl.textContent = 'Cantidad inválida';
+      errorEl.style.display = '';
+      return;
+    }
+    if (price < 0 || price > 1e12) {
+      errorEl.textContent = 'Precio inválido';
+      errorEl.style.display = '';
+      return;
+    }
+    const dateObj = new Date(date);
+    if (isNaN(dateObj.getTime()) || dateObj < new Date('2000-01-01') || dateObj > new Date('2100-01-01')) {
+      errorEl.textContent = 'Fecha inválida';
+      errorEl.style.display = '';
+      return;
+    }
+    if (JSON.stringify(metadata).length > 1000) {
+      errorEl.textContent = 'Metadata demasiado grande';
+      errorEl.style.display = '';
+      return;
+    }
+
+    const record = {
+      user_id: currentUser.id,
+      asset_type: selectedType,
+      ticker,
+      quantity: qty,
+      purchase_price: price || 1,
+      purchase_date: date,
+      metadata,
+    };
+
+    try {
+      if (isEdit) {
+        const { error } = await supabaseClient.from('holdings').update(record).eq('id', editId);
+        if (error) throw error;
+      } else {
+        const { error } = await supabaseClient.from('holdings').insert(record);
+        if (error) throw error;
+      }
+      overlay.remove();
+      loadPortfolio();
+    } catch (e) {
+      errorEl.textContent = 'Error: ' + e.message;
+      errorEl.style.display = '';
+    }
+  });
+}
+
+function editHolding(id) {
+  openAddHoldingModal(id);
+}
+
+async function deleteHolding(id) {
+  if (!confirm('¿Eliminar este activo del portfolio?')) return;
+  try {
+    await supabaseClient.from('holdings').delete().eq('id', id);
+    loadPortfolio();
+  } catch (e) {
+    alert('Error eliminando: ' + e.message);
+  }
+}
+
+// ─── Cash Flow Calendar ───
+
+async function renderPortfolioCashflows(config) {
+  const container = document.getElementById('portfolio-cashflows');
+  const chartWrapper = document.getElementById('portfolio-cashflow-chart-wrapper');
+  const bondHoldings = _portfolioHoldings.filter(h => ['soberano', 'on', 'cer', 'lecap'].includes(h.asset_type));
+
+  if (bondHoldings.length === 0) {
+    container.innerHTML = '<p style="color:var(--text-tertiary);font-size:0.85rem;padding:16px 0">Agregá bonos a tu portfolio para ver el calendario de cobros.</p>';
+    if (chartWrapper) chartWrapper.style.display = 'none';
+    return;
+  }
+
+  // Fetch CER coefficient if needed
+  let cerActual = 0;
+  const hasCER = bondHoldings.some(h => h.asset_type === 'cer');
+  if (hasCER) {
+    try {
+      const cerResp = await fetch('/api/cer?v=2').then(r => r.json());
+      cerActual = cerResp?.cer || cerResp?.data || 0;
+    } catch (e) { /* ignore */ }
+  }
+
+  const flows = [];
+  const today = new Date();
+
+  for (const holding of bondHoldings) {
+    const qty = parseFloat(holding.quantity) || 0;
+
+    if (holding.asset_type === 'soberano') {
+      const bond = config.soberanos?.[holding.ticker];
+      if (!bond?.flujos) continue;
+      for (const f of bond.flujos) {
+        const fecha = typeof f.fecha === 'string' ? parseLocalDate(f.fecha) : f.fecha;
+        if (fecha <= today) continue;
+        flows.push({ date: fecha, amount: f.monto * (qty / 100), currency: 'USD', ticker: holding.ticker, type: 'soberano' });
+      }
+    }
+
+    if (holding.asset_type === 'on') {
+      const bond = config.ons?.[holding.ticker];
+      if (!bond?.flujos) continue;
+      for (const f of bond.flujos) {
+        const fecha = typeof f.fecha === 'string' ? parseLocalDate(f.fecha) : f.fecha;
+        if (fecha <= today) continue;
+        flows.push({ date: fecha, amount: f.monto * qty, currency: 'USD', ticker: holding.ticker, type: 'on' });
+      }
+    }
+
+    if (holding.asset_type === 'cer' && cerActual) {
+      const bond = config.bonos_cer?.[holding.ticker];
+      if (!bond?.flujos) continue;
+      const coefCER = cerActual / (bond.cer_emision || 1);
+      let amortAcum = 0;
+      for (const f of bond.flujos) {
+        const vrAntes = 1 - amortAcum;
+        amortAcum += (f.amortizacion || 0);
+        const fecha = typeof f.fecha === 'string' ? parseLocalDate(f.fecha) : f.fecha;
+        if (fecha <= today) continue;
+        const flujo = (vrAntes * (f.tasa_interes || 0) * (f.base || 0.5) + (f.amortizacion || 0)) * coefCER;
+        const multiplier = holding.ticker === 'DICP' ? 1.27 : 1;
+        flows.push({ date: fecha, amount: flujo * qty * multiplier, currency: 'ARS', ticker: holding.ticker, type: 'cer' });
+      }
+    }
+
+    if (holding.asset_type === 'lecap') {
+      const lecap = (config.lecaps?.letras || []).find(l => l.ticker === holding.ticker);
+      if (!lecap) continue;
+      const fecha = parseLocalDate(lecap.fecha_vencimiento);
+      if (fecha <= today) continue;
+      flows.push({ date: fecha, amount: lecap.pago_final * (qty / 100), currency: 'ARS', ticker: holding.ticker, type: 'lecap' });
+    }
+  }
+
+  flows.sort((a, b) => a.date - b.date);
+
+  if (flows.length === 0) {
+    container.innerHTML = '<p style="color:var(--text-tertiary);font-size:0.85rem;padding:16px 0">No hay flujos futuros para tus bonos actuales.</p>';
+    if (chartWrapper) chartWrapper.style.display = 'none';
+    return;
+  }
+
+  // Group by month
+  const months = {};
+  for (const f of flows) {
+    const key = f.date.getFullYear() + '-' + String(f.date.getMonth() + 1).padStart(2, '0');
+    if (!months[key]) months[key] = { usd: 0, ars: 0, details: [] };
+    if (f.currency === 'USD') months[key].usd += f.amount;
+    else months[key].ars += f.amount;
+    months[key].details.push(f);
+  }
+
+  const monthNames = MONTH_NAMES;
+  let tableHTML = '';
+  for (const [key, m] of Object.entries(months)) {
+    const [year, mon] = key.split('-');
+    const monthLabel = `${monthNames[parseInt(mon)-1]} ${year}`;
+    const totalUsdStr = m.usd > 0 ? 'US$' + m.usd.toLocaleString('es-AR', {minimumFractionDigits:2, maximumFractionDigits:2}) : '';
+    const totalArsStr = m.ars > 0 ? '$' + m.ars.toLocaleString('es-AR', {minimumFractionDigits:2, maximumFractionDigits:2}) : '';
+    const totalStr = [totalUsdStr, totalArsStr].filter(Boolean).join(' + ');
+    tableHTML += `<tr class="cashflow-month-header"><td colspan="4">${monthLabel} <span style="font-weight:400;font-size:0.75rem;color:var(--text-secondary);margin-left:8px">${totalStr}</span></td></tr>`;
+    // Individual flows sorted by date
+    const sorted = m.details.sort((a, b) => a.date - b.date);
+    for (const d of sorted) {
+      const sym = d.currency === 'USD' ? 'US$' : '$';
+      const dateStr = d.date.toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric' });
+      tableHTML += `<tr>
+        <td style="color:var(--text-secondary)">${dateStr}</td>
+        <td style="text-align:right;font-weight:600">${d.currency === 'USD' ? sym + d.amount.toLocaleString('es-AR', {minimumFractionDigits:2, maximumFractionDigits:2}) : '—'}</td>
+        <td style="text-align:right;font-weight:600">${d.currency === 'ARS' ? sym + d.amount.toLocaleString('es-AR', {minimumFractionDigits:2, maximumFractionDigits:2}) : '—'}</td>
+        <td style="font-size:0.75rem;color:var(--text-tertiary)">${d.ticker} <span style="opacity:0.6">${d.type}</span></td>
+      </tr>`;
+    }
+  }
+
+  container.innerHTML = `
+    <table class="cashflow-table">
+      <thead><tr><th>Fecha</th><th style="text-align:right">USD</th><th style="text-align:right">ARS</th><th>Activo</th></tr></thead>
+      <tbody>${tableHTML}</tbody>
+    </table>`;
+
+  // Render chart
+  if (chartWrapper) {
+    chartWrapper.style.display = '';
+    renderCashflowChart(months);
+  }
+}
+
+let _cashflowChart = null;
+function renderCashflowChart(months) {
+  const canvas = document.getElementById('portfolio-cashflow-chart');
+  if (!canvas) return;
+  if (_cashflowChart) _cashflowChart.destroy();
+
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  const gridColor = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)';
+  const textColor = isDark ? '#a0a0a8' : '#71717a';
+  const monthNames = MONTH_NAMES;
+  const labels = Object.keys(months).map(k => { const [y,m] = k.split('-'); return `${monthNames[parseInt(m)-1]} ${y}`; });
+  const usdData = Object.values(months).map(m => m.usd);
+  const arsData = Object.values(months).map(m => m.ars);
+
+  _cashflowChart = new Chart(canvas, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { label: 'USD', data: usdData, backgroundColor: '#3b82f6', yAxisID: 'yUSD', borderRadius: 4 },
+        { label: 'ARS', data: arsData, backgroundColor: '#22c55e', yAxisID: 'yARS', borderRadius: 4 },
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { labels: { color: textColor } } },
+      scales: {
+        x: { ticks: { color: textColor }, grid: { color: gridColor } },
+        yUSD: { position: 'left', title: { display: true, text: 'USD', color: textColor }, ticks: { color: textColor }, grid: { color: gridColor } },
+        yARS: { position: 'right', title: { display: true, text: 'ARS', color: textColor }, ticks: { color: textColor }, grid: { display: false } },
+      }
+    }
+  });
 }

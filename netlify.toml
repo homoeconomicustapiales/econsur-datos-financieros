@@ -22,10 +22,6 @@
   to = "/.netlify/functions/soberanos"
   status = 200
 
-[[redirects]]
-  from = "/api/visits"
-  to = "/.netlify/functions/visits"
-  status = 200
 
 [[redirects]]
   from = "/api/mundo"
@@ -55,6 +51,11 @@
 [[redirects]]
   from = "/api/ons"
   to = "/.netlify/functions/ons"
+  status = 200
+
+[[redirects]]
+  from = "/api/auth-config"
+  to = "/.netlify/functions/auth-config"
   status = 200
 
 [[redirects]]

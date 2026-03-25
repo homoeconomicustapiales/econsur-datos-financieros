@@ -3,7 +3,7 @@ exports.handler = async (event) => {
   const headers = { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' };
 
   try {
-    // Fetch money market (ultimo + penultimo) and renta mixta in parallel
+    // Fetch money market and renta mixta (ultimo + penultimo) in parallel
     const [mmLatest, mmPrevious, rmLatest, rmPrevious] = await Promise.all([
       fetchJSON('https://api.argentinadatos.com/v1/finanzas/fci/mercadoDinero/ultimo'),
       fetchJSON('https://api.argentinadatos.com/v1/finanzas/fci/mercadoDinero/penultimo'),

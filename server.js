@@ -22,13 +22,22 @@ app.use((req, res, next) => {
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' https://fonts.gstatic.com",
       "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net",
-      "connect-src 'self' https://api.argentinadatos.com https://data912.com https://api.bcra.gob.ar",
+      "connect-src 'self' https://api.argentinadatos.com https://data912.com https://api.bcra.gob.ar https://*.supabase.co",
+      "frame-src https://*.supabase.co",
       "object-src 'none'",
     ].join('; ')
   );
   next();
 });
 app.use(express.static(path.join(__dirname, 'public')));
+
+// --- Auth Config API ---
+app.get('/api/auth-config', (req, res) => {
+  res.json({
+    url: process.env.SUPABASE_URL || '',
+    anonKey: process.env.SUPABASE_ANON_KEY || '',
+  });
+});
 
 // --- Config API ---
 

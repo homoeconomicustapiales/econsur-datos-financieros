@@ -209,6 +209,15 @@
       "entidad": "Mercado Fondo",
       "categoria": "Money Market",
       "activo": true
+    },
+    {
+      "id": "pellegrini-renta-pesos-a",
+      "fondo_id": 162,
+      "clase_id": 0,
+      "nombre": "Pellegrini Renta Pesos - Clase A",
+      "entidad": "Pellegrini",
+      "categoria": "Money Market",
+      "activo": true
     }
   ],
   "lecaps": {
