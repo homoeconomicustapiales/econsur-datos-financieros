@@ -1562,48 +1562,62 @@ async function loadMundo() {
     const { data, updated } = await res.json();
 
     grid.innerHTML = '';
+
+    // Group items by category (preserving API order)
+    const groups = [];
+    const groupMap = {};
     data.forEach(item => {
       if (item.price === null) return;
+      const g = item.group || 'Otros';
+      if (!groupMap[g]) { groupMap[g] = []; groups.push(g); }
+      groupMap[g].push(item);
+    });
 
-      const isRate = item.id === 'tnx';
-      const isUp = item.change >= 0;
-      const changeColor = isUp ? 'var(--green)' : 'var(--red)';
-      const arrow = isUp ? '▲' : '▼';
+    groups.forEach(groupName => {
+      const header = document.createElement('div');
+      header.className = 'mundo-group-header';
+      header.textContent = groupName;
+      grid.appendChild(header);
 
-      let priceStr;
-      if (isRate) {
-        priceStr = item.price.toFixed(3) + '%';
-      } else if (item.price >= 10000) {
-        priceStr = item.price.toLocaleString('es-AR', { maximumFractionDigits: 0 });
-      } else if (item.price >= 100) {
-        priceStr = item.price.toLocaleString('es-AR', { maximumFractionDigits: 2 });
-      } else {
-        priceStr = item.price.toLocaleString('es-AR', { maximumFractionDigits: 4 });
-      }
+      groupMap[groupName].forEach(item => {
+        const isRate = item.group === 'Tasas';
+        const isUp = item.change >= 0;
+        const changeColor = isUp ? 'var(--green)' : 'var(--red)';
+        const arrow = isUp ? '▲' : '▼';
 
-      const canvasId = `spark-${item.id}`;
-      const card = document.createElement('div');
-      card.className = 'mundo-card';
-      card.style.cursor = 'pointer';
-      card.addEventListener('click', () => openMundoDetail(item.id, item.name, item.icon));
-      card.innerHTML = `
-        <div class="mundo-icon">${item.icon}</div>
-        <div class="mundo-info">
-          <div class="mundo-name">${item.name}</div>
-          <div class="mundo-price">${priceStr}</div>
-        </div>
-        <div class="mundo-spark"><canvas id="${canvasId}" width="120" height="40"></canvas></div>
-        <div class="mundo-change" style="color:${changeColor}">
-          <span class="mundo-arrow">${arrow}</span>
-          <span>${Math.abs(item.change).toFixed(2)}%</span>
-        </div>
-      `;
-      grid.appendChild(card);
+        let priceStr;
+        if (isRate) {
+          priceStr = item.price.toFixed(3) + '%';
+        } else if (item.price >= 10000) {
+          priceStr = item.price.toLocaleString('es-AR', { maximumFractionDigits: 0 });
+        } else if (item.price >= 100) {
+          priceStr = item.price.toLocaleString('es-AR', { maximumFractionDigits: 2 });
+        } else {
+          priceStr = item.price.toLocaleString('es-AR', { maximumFractionDigits: 4 });
+        }
 
-      // Draw sparkline
-      if (item.sparkline && item.sparkline.length > 1) {
-        drawSparkline(canvasId, item.sparkline, isUp);
-      }
+        const canvasId = `spark-${item.id}`;
+        const card = document.createElement('div');
+        card.className = 'mundo-card';
+        card.addEventListener('click', () => openMundoDetail(item.id, item.name, item.icon));
+        card.innerHTML = `
+          <div class="mundo-icon">${item.icon}</div>
+          <div class="mundo-info">
+            <div class="mundo-name">${item.name}</div>
+            <div class="mundo-price">${priceStr}</div>
+          </div>
+          <div class="mundo-spark"><canvas id="${canvasId}" width="60" height="24"></canvas></div>
+          <div class="mundo-change" style="color:${changeColor}">
+            <span class="mundo-arrow">${arrow}</span>
+            <span>${Math.abs(item.change).toFixed(2)}%</span>
+          </div>
+        `;
+        grid.appendChild(card);
+
+        if (item.sparkline && item.sparkline.length > 1) {
+          drawSparkline(canvasId, item.sparkline, isUp);
+        }
+      });
     });
 
     const src = document.getElementById('mundo-source');

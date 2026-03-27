@@ -2,16 +2,34 @@
 const https = require('https');
 
 const SYMBOLS = [
-  { id: 'spx', symbol: 'ES%3DF', name: 'S&P 500', icon: '📈' },
-  { id: 'nasdaq', symbol: 'NQ%3DF', name: 'Nasdaq 100', icon: '💻' },
-  { id: 'dow', symbol: 'YM%3DF', name: 'Dow Jones', icon: '🏦' },
-  { id: 'tnx', symbol: '%5ETNX', name: 'Tasa 10Y USA', icon: '🏛️' },
-  { id: 'oil', symbol: 'CL%3DF', name: 'Petróleo WTI', icon: '🛢️' },
-  { id: 'brent', symbol: 'BZ%3DF', name: 'Petróleo Brent', icon: '🛢️' },
-  { id: 'gold', symbol: 'GC%3DF', name: 'Oro', icon: '🥇' },
-  { id: 'btc', symbol: 'BTC-USD', name: 'Bitcoin', icon: '₿' },
-  { id: 'eth', symbol: 'ETH-USD', name: 'Ethereum', icon: 'Ξ' },
-  { id: 'eurusd', symbol: 'EURUSD%3DX', name: 'EUR/USD', icon: '🇪🇺' },
+  // Índices
+  { id: 'spx', symbol: 'ES%3DF', name: 'S&P 500', icon: '📈', group: 'Índices' },
+  { id: 'nasdaq', symbol: 'NQ%3DF', name: 'Nasdaq 100', icon: '💻', group: 'Índices' },
+  { id: 'dow', symbol: 'YM%3DF', name: 'Dow Jones', icon: '🏦', group: 'Índices' },
+  // Tasas
+  { id: 'tnx', symbol: '%5ETNX', name: 'Tasa 10Y USA', icon: '🇺🇸', group: 'Tasas' },
+  { id: 'us30y', symbol: '%5ETYX', name: 'Tasa 30Y USA', icon: '🇺🇸', group: 'Tasas' },
+  { id: 'us5y', symbol: '%5EFVX', name: 'Tasa 5Y USA', icon: '🇺🇸', group: 'Tasas' },
+  // Energía
+  { id: 'oil', symbol: 'CL%3DF', name: 'Petróleo WTI', icon: '🛢️', group: 'Energía' },
+  { id: 'brent', symbol: 'BZ%3DF', name: 'Petróleo Brent', icon: '🛢️', group: 'Energía' },
+  { id: 'gasoline', symbol: 'RB%3DF', name: 'Gasolina', icon: '⛽', group: 'Energía' },
+  // Metales
+  { id: 'gold', symbol: 'GC%3DF', name: 'Oro', icon: '🥇', group: 'Metales' },
+  { id: 'silver', symbol: 'SI%3DF', name: 'Plata', icon: '🥈', group: 'Metales' },
+  { id: 'copper', symbol: 'HG%3DF', name: 'Cobre', icon: '🔶', group: 'Metales' },
+  // Agro
+  { id: 'soy', symbol: 'ZS%3DF', name: 'Soja', icon: '🌱', group: 'Agro' },
+  { id: 'wheat', symbol: 'ZW%3DF', name: 'Trigo', icon: '🌾', group: 'Agro' },
+  { id: 'corn', symbol: 'ZC%3DF', name: 'Maíz', icon: '🌽', group: 'Agro' },
+  // Crypto
+  { id: 'btc', symbol: 'BTC-USD', name: 'Bitcoin', icon: '₿', group: 'Crypto' },
+  { id: 'eth', symbol: 'ETH-USD', name: 'Ethereum', icon: 'Ξ', group: 'Crypto' },
+  { id: 'avax', symbol: 'AVAX-USD', name: 'Avalanche', icon: '🔺', group: 'Crypto' },
+  // Monedas
+  { id: 'eurusd', symbol: 'EURUSD%3DX', name: 'EUR/USD', icon: '🇪🇺', group: 'Monedas' },
+  { id: 'usdmxn', symbol: 'MXN%3DX', name: 'USD/MXN', icon: '🇲🇽', group: 'Monedas' },
+  { id: 'usdbrl', symbol: 'BRL%3DX', name: 'USD/BRL', icon: '🇧🇷', group: 'Monedas' },
 ];
 
 async function fetchYahoo(symbolEncoded) {
