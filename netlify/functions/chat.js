@@ -108,10 +108,14 @@ async function gatherContext() {
 
   // 3. Plazo fijo
   try {
-    const pfData = await fetchJSON('https://api.argentinadatos.com/v1/finanzas/tasas/plazoFijo');
+    const pfData = await fetchJSON('https://api.argentinadatos.com/v1/finanzas/tasas/plazoFijo/');
     if (Array.isArray(pfData) && pfData.length > 0) {
       const top = pfData.sort((a, b) => b.tnaClientes - a.tnaClientes).slice(0, 10);
-      const lines = top.map(p => `- ${p.entidad}: TNA ${p.tnaClientes}%`);
+      const lines = top.map(p => {
+        // API returns decimals (0.29 = 29%), convert to percentage
+        const tna = p.tnaClientes < 1 ? (p.tnaClientes * 100).toFixed(1) : p.tnaClientes;
+        return `- ${p.entidad}: TNA ${tna}%`;
+      });
       parts.push(`PLAZO FIJO (top 10 bancos, $100K a 30 días):\n${lines.join('\n')}`);
     }
   } catch (e) {
