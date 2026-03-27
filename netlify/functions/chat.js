@@ -1,7 +1,6 @@
 // AI Chat assistant powered by Claude Haiku
 // Fetches live data from internal APIs and uses it as context for Claude
 const https = require('https');
-const fetch = require('node-fetch');
 
 function fetchJSON(url, timeout = 5000) {
   return new Promise((resolve, reject) => {
@@ -64,8 +63,7 @@ async function gatherContext() {
 
   try {
     // Config: billeteras y LECAPs
-    const configRes = await fetch('https://rendimientos.co/api/config');
-    const config = await configRes.json();
+    const config = await fetchJSON('https://rendimientos.co/api/config');
 
     if (config.garantizados) {
       const activos = config.garantizados.filter(g => g.activo !== false).sort((a, b) => b.tna - a.tna).slice(0, 15);
@@ -89,8 +87,7 @@ async function gatherContext() {
 
   try {
     // Plazo fijo
-    const pfRes = await fetch('https://api.argentinadatos.com/v1/finanzas/tasas/plazoFijo');
-    const pfData = await pfRes.json();
+    const pfData = await fetchJSON('https://api.argentinadatos.com/v1/finanzas/tasas/plazoFijo');
     if (Array.isArray(pfData) && pfData.length > 0) {
       const top = pfData.sort((a, b) => b.tnaClientes - a.tnaClientes).slice(0, 10);
       const lines = top.map(p => `- ${p.entidad}: TNA ${p.tnaClientes}%`);
@@ -167,29 +164,42 @@ exports.handler = async (event) => {
     messages.push({ role: 'user', content: message });
 
     // Call Claude API
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-      },
-      body: JSON.stringify({
-        model: 'claude-haiku-4-20250414',
+    const reply = await new Promise((resolve, reject) => {
+      const payload = JSON.stringify({
+        model: 'claude-3-5-haiku-20241022',
         max_tokens: 600,
         system: systemPrompt,
         messages,
-      }),
+      });
+      const req = https.request({
+        hostname: 'api.anthropic.com',
+        path: '/v1/messages',
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+          'Content-Length': Buffer.byteLength(payload),
+        },
+      }, res => {
+        let data = '';
+        res.on('data', c => data += c);
+        res.on('end', () => {
+          try {
+            if (res.statusCode !== 200) {
+              console.error('Anthropic API error:', res.statusCode, data);
+              return reject(new Error('API error ' + res.statusCode));
+            }
+            const json = JSON.parse(data);
+            resolve(json.content[0].text);
+          } catch (e) { reject(e); }
+        });
+      });
+      req.on('error', reject);
+      req.setTimeout(25000, () => { req.destroy(); reject(new Error('timeout')); });
+      req.write(payload);
+      req.end();
     });
-
-    if (!response.ok) {
-      const err = await response.text();
-      console.error('Anthropic API error:', err);
-      return { statusCode: 502, headers, body: JSON.stringify({ error: 'Error al consultar el asistente' }) };
-    }
-
-    const data = await response.json();
-    const reply = data.content[0].text;
 
     return {
       statusCode: 200,
