@@ -1504,6 +1504,119 @@ function renderYieldCurve(items) {
   });
 }
 
+// ─── AI Chat Assistant ───
+(function initChat() {
+  const chatBody = document.getElementById('chat-body');
+  const chatToggle = document.getElementById('chat-toggle');
+  const chatHeader = document.querySelector('.chat-header');
+  const chatInput = document.getElementById('chat-input');
+  const chatSend = document.getElementById('chat-send');
+  const chatMessages = document.getElementById('chat-messages');
+  const chatSuggestions = document.getElementById('chat-suggestions');
+  if (!chatBody || !chatInput) return;
+
+  let history = [];
+  let isLoading = false;
+
+  // Toggle collapse
+  chatHeader.addEventListener('click', () => {
+    chatBody.classList.toggle('collapsed');
+    chatToggle.classList.toggle('collapsed');
+  });
+
+  // Suggestion buttons
+  chatSuggestions.addEventListener('click', (e) => {
+    const btn = e.target.closest('.chat-suggestion');
+    if (btn) sendMessage(btn.dataset.q);
+  });
+
+  // Send on Enter
+  chatInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage(chatInput.value);
+    }
+  });
+
+  chatSend.addEventListener('click', () => sendMessage(chatInput.value));
+
+  function addMessage(role, content) {
+    const div = document.createElement('div');
+    div.className = `chat-msg ${role}`;
+    const bubble = document.createElement('div');
+    bubble.className = 'chat-msg-bubble';
+    // Simple markdown: **bold**, bullet lists, newlines
+    let html = content
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/^- (.+)/gm, '<li>$1</li>')
+      .replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>')
+      .replace(/\n/g, '<br>');
+    bubble.innerHTML = html;
+    div.appendChild(bubble);
+    chatMessages.appendChild(div);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  }
+
+  function showTyping() {
+    const div = document.createElement('div');
+    div.className = 'chat-msg assistant';
+    div.id = 'chat-typing';
+    div.innerHTML = `<div class="chat-typing"><div class="chat-typing-dot"></div><div class="chat-typing-dot"></div><div class="chat-typing-dot"></div></div>`;
+    chatMessages.appendChild(div);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  }
+
+  function hideTyping() {
+    const el = document.getElementById('chat-typing');
+    if (el) el.remove();
+  }
+
+  async function sendMessage(text) {
+    if (!text || !text.trim() || isLoading) return;
+    text = text.trim();
+    chatInput.value = '';
+
+    // Hide suggestions after first message
+    if (chatSuggestions) chatSuggestions.style.display = 'none';
+
+    addMessage('user', text);
+    history.push({ role: 'user', content: text });
+
+    isLoading = true;
+    chatSend.disabled = true;
+    chatInput.disabled = true;
+    showTyping();
+
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: text, history: history.slice(-6) }),
+      });
+
+      hideTyping();
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        addMessage('assistant', err.error || 'Error al consultar el asistente. Intentá de nuevo.');
+      } else {
+        const data = await res.json();
+        addMessage('assistant', data.response);
+        history.push({ role: 'assistant', content: data.response });
+      }
+    } catch (e) {
+      hideTyping();
+      addMessage('assistant', 'Error de conexión. Intentá de nuevo.');
+    }
+
+    isLoading = false;
+    chatSend.disabled = false;
+    chatInput.disabled = false;
+    chatInput.focus();
+  }
+})();
+
 // ─── Mundo (Global Monitor) ───
 function drawSparkline(canvasId, data, isUp) {
   const canvas = document.getElementById(canvasId);
