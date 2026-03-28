@@ -705,6 +705,41 @@ function setupKeyboardNav() {
 }
 
 // ─── Plazo Fijo section ───
+
+const PLAZO_FIJO_LOGOS = {
+  'Banco Nación': '/logos/Banco_Nación.png',
+  'Banco Santander': '/logos/Banco_Santander.png',
+  'Banco Galicia': '/logos/Banco_Galicia.png',
+  'Banco Provincia': '/logos/Banco_Provincia.svg',
+  'BBVA Argentina': '/logos/BBVA_Argentina.png',
+  'Banco Macro': '/logos/Banco_Macro.png',
+  'Banco Credicoop': '/logos/Banco_Credicoop.png',
+  'ICBC Argentina': '/logos/ICBC_Argentina.png',
+  'Banco Ciudad': '/logos/Banco_Ciudad.png',
+  'Banco Comafi': '/logos/Banco_Comafi.png',
+  'Banco de Corrientes': '/logos/Banco_de_Corrientes.svg',
+  'Banco de Córdoba': '/logos/BANCOR.svg',
+  'Banco del Chubut': '/logos/Banco_del_Chubut.png',
+  'Banco del Sol': '/logos/Banco_del_Sol.svg',
+  'Banco Hipotecario': '/logos/Banco_Hipotecario.png',
+  'Banco Voii': '/logos/Banco_Voii.png',
+  'Bibank': '/logos/Bibank.png',
+  'Ualá': '/logos/Uala.svg',
+  'Reba': '/logos/Reba_Compañía_Financiera.png',
+  'Banco BICA': '/logos/Banco_BICA.svg',
+  'Banco Supervielle': '/logos/Banco_Supervielle.svg',
+  'Banco Tierra del Fuego': '/logos/Banco_Prov__Tierra_del_Fuego.png',
+  'Banco de Formosa': '/logos/Banco_de_Formosa.png',
+  'Banco Dino': '/logos/Banco_Dino.png',
+  'Banco Julio': '/logos/Banco_Julio.png',
+  'Banco Mariva': '/logos/Banco_Mariva.png',
+  'Banco Masventas': '/logos/Banco_Masventas.png',
+  'Banco Meridian': '/logos/Banco_Meridian.png',
+  'Banco CMF': '/logos/Banco_CMF.png',
+  'Banco de Comercio': '/logos/Banco_de_Comercio.png',
+  'Crédito Regional': '/logos/Crédito_Regional.png',
+};
+
 async function loadPlazoFijo() {
   const container = document.getElementById('plazofijo-list');
   container.innerHTML = `<div class="loading"><div class="loading-spinner"></div><p>Cargando tasas...</p></div>`;
@@ -756,7 +791,7 @@ async function loadPlazoFijo() {
       const card = createCard({
         logo: initials,
         logoBg: stringToColor(banco.nombre),
-        logoSrc: banco.logo || null,
+        logoSrc: PLAZO_FIJO_LOGOS[displayName] || banco.logo || null,
         name: displayName,
         tags,
         rate: `${bestRate.toFixed(1)}%`,
@@ -784,7 +819,7 @@ async function loadPlazoFijo() {
       return {
         tna: Math.max(banco.tna_clientes || 0, banco.tna_no_clientes || 0),
         nombre: displayName,
-        logoSrc: banco.logo || null,
+        logoSrc: PLAZO_FIJO_LOGOS[displayName] || banco.logo || null,
         logo: displayName.replace(/^Banco\s*/i, '').substring(0, 2).toUpperCase(),
         logoBg: stringToColor(banco.nombre)
       };
