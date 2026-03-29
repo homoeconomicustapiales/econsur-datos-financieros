@@ -5,8 +5,8 @@
       "nombre": "Carrefour Banco",
       "tipo": "Billetera",
       "limite": "$4 M",
-      "tna": 27,
-      "vigente_desde": "21/03/2026",
+      "tna": 26,
+      "vigente_desde": "28/03/2026",
       "logo": "CB",
       "logo_bg": "#004a9f",
       "activo": true

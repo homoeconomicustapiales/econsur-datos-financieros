@@ -113,14 +113,11 @@ function setupThemeToggle() {
 
   const btn = document.getElementById('theme-toggle');
   if (!btn) return;
-  btn.innerHTML = theme === 'dark' ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>' : '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
-
   btn.addEventListener('click', () => {
     const current = document.documentElement.getAttribute('data-theme');
     const next = current === 'dark' ? 'light' : 'dark';
     document.documentElement.setAttribute('data-theme', next);
     localStorage.setItem('theme', next);
-    btn.innerHTML = next === 'dark' ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>' : '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
   });
 }
 
@@ -241,11 +238,13 @@ async function init() {
   renderEspeciales(config.especiales.filter(i => i.activo));
 }
 
-function renderRendimientosChart(items, containerId) {
+function renderRendimientosChart(items, containerId, options = {}) {
   const container = document.getElementById(containerId || 'rendimientos-chart');
   if (!container || items.length === 0) return;
 
-  // Sort descending: highest on top
+  const vertical = options.vertical || false;
+
+  // Sort descending
   const sorted = [...items].sort((a, b) => b.tna - a.tna);
   const maxTna = Math.max(...sorted.map(i => i.tna));
   const minTna = Math.min(...sorted.map(i => i.tna));
@@ -253,34 +252,65 @@ function renderRendimientosChart(items, containerId) {
   // Gradient from vibrant green (top) to muted (bottom)
   function getBarColor(tna) {
     const ratio = (tna - minTna) / (maxTna - minTna || 1);
-    const h = 160; // green hue
-    const s = 45 + ratio * 30;  // 45% to 75% saturation
-    const l = 55 - ratio * 15;  // 55% to 40% lightness
+    const h = 160;
+    const s = 45 + ratio * 30;
+    const l = 55 - ratio * 15;
     return `hsl(${h}, ${s}%, ${l}%)`;
   }
 
-  const rows = sorted.map(item => {
-    const chartMin = 10;
-    const pct = Math.max(8, ((item.tna - chartMin) / (maxTna - chartMin)) * 100);
-    const color = getBarColor(item.tna);
-    const safeChartLogoSrc = item.logoSrc?.replace(/^http:\/\//, 'https://');
-    const logoInner = safeChartLogoSrc
-      ? `<img src="${safeChartLogoSrc}" alt="${item.nombre}" onerror="this.parentElement.textContent='${item.logo}'">`
-      : item.logo;
-    const logoBg = safeChartLogoSrc ? 'transparent' : item.logoBg;
+  if (vertical) {
+    // Vertical bars: columns side by side, bars grow upward
+    // Limit to top items that fit on screen
+    const maxItems = options.maxItems || 8;
+    const displayed = sorted.slice(0, maxItems);
+    const chartMin = Math.floor(minTna * 0.95);
+    const cols = displayed.map(item => {
+      const pct = Math.max(8, ((item.tna - chartMin) / (maxTna - chartMin)) * 100);
+      const color = getBarColor(item.tna);
+      const safeChartLogoSrc = item.logoSrc?.replace(/^http:\/\//, 'https://');
+      const logoInner = safeChartLogoSrc
+        ? `<img src="${safeChartLogoSrc}" alt="${item.nombre}" onerror="this.parentElement.textContent='${item.logo}'">`
+        : item.logo;
+      const logoBg = safeChartLogoSrc ? 'transparent' : item.logoBg;
 
-    return `
-      <div class="chart-row">
-        <div class="chart-logo" style="background:${logoBg}">${logoInner}</div>
-        <div class="chart-bar-wrap">
-          <div class="chart-bar" style="width:${pct}%;background:${color}">
-            <span class="chart-value">${item.tna.toFixed(2)}%</span>
+      return `
+        <div class="vchart-col">
+          <span class="vchart-value">${item.tna.toFixed(1)}%</span>
+          <div class="vchart-bar-wrap">
+            <div class="vchart-bar" style="height:${pct}%;background:${color}"></div>
           </div>
-        </div>
-      </div>`;
-  }).join('');
+          <div class="chart-logo" style="background:${logoBg}">${logoInner}</div>
+          <span class="vchart-name">${item.nombre.replace(/^Banco\s*/i, '')}</span>
+        </div>`;
+    }).join('');
 
-  container.innerHTML = rows;
+    container.className = 'chart-wrapper vchart';
+    container.innerHTML = cols;
+  } else {
+    // Horizontal bars (original)
+    const rows = sorted.map(item => {
+      const chartMin = 10;
+      const pct = Math.max(8, ((item.tna - chartMin) / (maxTna - chartMin)) * 100);
+      const color = getBarColor(item.tna);
+      const safeChartLogoSrc = item.logoSrc?.replace(/^http:\/\//, 'https://');
+      const logoInner = safeChartLogoSrc
+        ? `<img src="${safeChartLogoSrc}" alt="${item.nombre}" onerror="this.parentElement.textContent='${item.logo}'">`
+        : item.logo;
+      const logoBg = safeChartLogoSrc ? 'transparent' : item.logoBg;
+
+      return `
+        <div class="chart-row">
+          <div class="chart-logo" style="background:${logoBg}">${logoInner}</div>
+          <div class="chart-bar-wrap">
+            <div class="chart-bar" style="width:${pct}%;background:${color}">
+              <span class="chart-value">${item.tna.toFixed(2)}%</span>
+            </div>
+          </div>
+        </div>`;
+    }).join('');
+
+    container.innerHTML = rows;
+  }
 }
 
 function createCard({ logo, logoBg, logoSrc, name, entity, description, tags, rate, rateLabel, rateDate, highlighted }) {
