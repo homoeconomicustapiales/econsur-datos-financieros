@@ -1478,21 +1478,6 @@
       ],
       "nombre": "Banco BBVA"
     },
-    "BVCO": {
-      "ticker_d912": "BVCOD",
-      "vencimiento": "2026-07-15",
-      "flujos": [
-        {
-          "fecha": "2026-04-15",
-          "monto": 0.0197
-        },
-        {
-          "fecha": "2026-07-15",
-          "monto": 1.0199
-        }
-      ],
-      "nombre": "BST"
-    },
     "BYCH": {
       "ticker_d912": "BYCHD",
       "vencimiento": "2028-10-10",
@@ -2446,17 +2431,6 @@
         }
       ],
       "nombre": "Arcor"
-    },
-    "SXC2": {
-      "ticker_d912": "SXC2D",
-      "vencimiento": "2026-06-01",
-      "flujos": [
-        {
-          "fecha": "2026-06-01",
-          "monto": 1.0325
-        }
-      ],
-      "nombre": "Mercado Pago"
     },
     "T662": {
       "ticker_d912": "T662D",
