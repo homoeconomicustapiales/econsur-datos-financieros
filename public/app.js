@@ -1167,7 +1167,7 @@ async function loadBcra() {
     };
 
     function fmtValor(v) {
-      if (v.valor === null) return '—';
+      if (v.valor == null || typeof v.valor !== 'number') return '—';
       if (v.formato === 'pct') return v.valor.toFixed(2) + '%';
       if (v.unidad === 'MM USD') return '$' + v.valor.toLocaleString('es-AR', { maximumFractionDigits: 0 }) + ' M';
       if (v.unidad === 'MM $') return '$' + (v.valor / 1000).toFixed(1) + ' B';
@@ -1175,7 +1175,7 @@ async function loadBcra() {
     }
 
     function fmtDelta(v) {
-      if (v.valor === null || v.valorAnterior === null) return '';
+      if (v.valor == null || v.valorAnterior == null || typeof v.valor !== 'number' || typeof v.valorAnterior !== 'number') return '';
       const delta = v.valor - v.valorAnterior;
       const pct = v.valorAnterior !== 0 ? (delta / Math.abs(v.valorAnterior)) * 100 : 0;
       const sign = delta >= 0 ? '+' : '';
