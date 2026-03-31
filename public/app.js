@@ -1275,7 +1275,8 @@ async function loadBcraChart(idVariable) {
     const res = await fetch(`/api/bcra?variable=${idVariable}&desde=${desde}&hasta=${hasta}`);
     if (!res.ok) throw new Error(`Error ${res.status}`);
     const json = await res.json();
-    const results = (json.results || []).reverse(); // oldest first
+    const detalle = json.results?.[0]?.detalle || [];
+    const results = [...detalle].reverse(); // oldest first
     canvas.style.opacity = '1';
 
     const labels = results.map(r => {
