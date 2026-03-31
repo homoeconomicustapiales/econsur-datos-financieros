@@ -67,6 +67,9 @@
         <a href="#" class="currency-tab" id="header-hipotecarios">
           <span class="flag"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span> Hipotecarios
         </a>
+        <a href="#" class="currency-tab" id="header-bcra">
+          <span class="flag"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M20 10v11"/><circle cx="12" cy="15" r="2"/></svg></span> BCRA
+        </a>
         <a href="#" class="currency-tab" id="header-portfolio">
           <span class="flag"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg></span> Portfolio
         </a>
@@ -259,6 +262,32 @@
       <section class="section" id="ons-chart-section">
         <div class="scatter-plot">
           <canvas id="ons-scatter"></canvas>
+        </div>
+      </section>
+    </div>
+
+    <!-- Tab: BCRA -->
+    <div id="tab-bcra" style="display:none">
+      <section class="section">
+        <h2>Indicadores BCRA</h2>
+        <p class="section-desc">Datos oficiales del Banco Central de la República Argentina, actualizados diariamente.</p>
+        <div id="bcra-list"></div>
+      </section>
+      <section class="section">
+        <h2>Histórico</h2>
+        <p class="section-desc">Seleccioná un indicador para ver su evolución.</p>
+        <div style="margin-bottom:12px">
+          <select id="bcra-chart-selector" style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);font-size:0.85rem">
+            <option value="">Elegí una variable...</option>
+          </select>
+          <select id="bcra-chart-range" style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);font-size:0.85rem;margin-left:6px">
+            <option value="30">30 días</option>
+            <option value="90" selected>90 días</option>
+            <option value="365">1 año</option>
+          </select>
+        </div>
+        <div class="chart-wrapper">
+          <canvas id="bcra-chart"></canvas>
         </div>
       </section>
     </div>

@@ -2341,3 +2341,64 @@ body {
 }
 .foro-submit-btn:hover { opacity: 0.85; }
 .foro-submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ─── BCRA Section ──────────────────────────────────────────────────────────── */
+.bcra-category { margin-bottom: 28px; }
+.bcra-cat-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-tertiary);
+  margin: 0 0 10px 0;
+}
+.bcra-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 10px;
+}
+.bcra-card {
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 16px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+.bcra-card:hover { border-color: var(--accent); background: var(--bg-hover); }
+.bcra-card-nombre {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+  line-height: 1.3;
+}
+.bcra-card-valor {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.02em;
+  margin-bottom: 4px;
+}
+.bcra-card-valor.bcra-null { color: var(--text-tertiary); font-size: 1rem; }
+.bcra-card-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+.bcra-card-fecha {
+  font-size: 0.7rem;
+  color: var(--text-tertiary);
+}
+.bcra-card-unidad {
+  font-size: 0.68rem;
+  color: var(--text-tertiary);
+  margin-top: 4px;
+}
+@media (max-width: 600px) {
+  .bcra-cards { grid-template-columns: repeat(2, 1fr); }
+  .bcra-card-valor { font-size: 1.05rem; }
+}

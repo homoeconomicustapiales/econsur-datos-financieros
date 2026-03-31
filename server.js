@@ -358,6 +358,68 @@ function parseCSVRow(line) {
   return cells;
 }
 
+// --- BCRA Indicators ---
+
+const BCRA_VARS = [
+  { id: 1,  key: 'reservas',           nombre: 'Reservas Internacionales',         unidad: 'MM USD',  categoria: 'Monetario', formato: 'numero' },
+  { id: 4,  key: 'usd_minorista',      nombre: 'Dólar Minorista (vendedor)',       unidad: '$/USD',   categoria: 'Cambiario', formato: 'numero' },
+  { id: 5,  key: 'usd_mayorista',      nombre: 'Dólar Mayorista (referencia)',     unidad: '$/USD',   categoria: 'Cambiario', formato: 'numero' },
+  { id: 7,  key: 'badlar',             nombre: 'Tasa BADLAR Privados',             unidad: '% TNA',   categoria: 'Tasas',     formato: 'pct' },
+  { id: 8,  key: 'tm20',               nombre: 'Tasa TM20 Privados',               unidad: '% TNA',   categoria: 'Tasas',     formato: 'pct' },
+  { id: 11, key: 'baibar',             nombre: 'Tasa BAIBAR (interbancaria)',      unidad: '% TNA',   categoria: 'Tasas',     formato: 'pct' },
+  { id: 12, key: 'tasa_depositos_30d', nombre: 'Tasa Depósitos 30 días',           unidad: '% TNA',   categoria: 'Tasas',     formato: 'pct' },
+  { id: 13, key: 'tasa_adelantos',     nombre: 'Tasa Adelantos Cta Cte',           unidad: '% TNA',   categoria: 'Tasas',     formato: 'pct' },
+  { id: 14, key: 'tasa_prestamos',     nombre: 'Tasa Préstamos Personales',        unidad: '% TNA',   categoria: 'Tasas',     formato: 'pct' },
+  { id: 15, key: 'base_monetaria',     nombre: 'Base Monetaria',                   unidad: 'MM $',    categoria: 'Monetario', formato: 'numero' },
+  { id: 16, key: 'circulacion',        nombre: 'Circulación Monetaria',            unidad: 'MM $',    categoria: 'Monetario', formato: 'numero' },
+  { id: 21, key: 'depositos_pf',       nombre: 'Depósitos a Plazo Fijo',           unidad: 'MM $',    categoria: 'Monetario', formato: 'numero' },
+  { id: 27, key: 'inflacion_mensual',  nombre: 'Inflación Mensual (IPC)',          unidad: '%',        categoria: 'Inflación', formato: 'pct' },
+  { id: 28, key: 'inflacion_interanual', nombre: 'Inflación Interanual',           unidad: '%',        categoria: 'Inflación', formato: 'pct' },
+  { id: 40, key: 'cer',                nombre: 'CER (coeficiente)',                unidad: '',         categoria: 'Índices',   formato: 'numero' },
+  { id: 44, key: 'uva',                nombre: 'UVA (valor)',                      unidad: '$',        categoria: 'Índices',   formato: 'numero' },
+];
+
+app.get('/api/bcra', async (req, res) => {
+  const { variable, desde, hasta } = req.query;
+  const bcraHeaders = { 'Accept': 'application/json', 'User-Agent': 'rendimientos.co' };
+
+  // Single variable history
+  if (variable) {
+    let url = `https://api.bcra.gob.ar/estadisticas/v4.0/Monetarias/${variable}?limit=365`;
+    if (desde) url += `&desde=${desde}`;
+    if (hasta) url += `&hasta=${hasta}`;
+    try {
+      const r = await fetch(url, { headers: bcraHeaders });
+      const data = await r.json();
+      res.json(data);
+    } catch (err) {
+      res.status(502).json({ error: err.message });
+    }
+    return;
+  }
+
+  // All key variables (last 2 data points each)
+  try {
+    const results = await Promise.allSettled(
+      BCRA_VARS.map(v =>
+        fetch(`https://api.bcra.gob.ar/estadisticas/v4.0/Monetarias/${v.id}?limit=2`, { headers: bcraHeaders })
+          .then(r => r.json())
+      )
+    );
+    const data = BCRA_VARS.map((varDef, i) => {
+      const result = results[i];
+      if (result.status === 'fulfilled' && result.value.results?.length > 0) {
+        const items = result.value.results;
+        return { ...varDef, valor: items[0].valor, fecha: items[0].fecha, valorAnterior: items[1]?.valor || null, fechaAnterior: items[1]?.fecha || null };
+      }
+      return { ...varDef, valor: null, fecha: null, valorAnterior: null, fechaAnterior: null };
+    });
+    res.json({ data, timestamp: new Date().toISOString() });
+  } catch (err) {
+    res.status(502).json({ error: err.message });
+  }
+});
+
 // --- Cotizaciones (Dólar Oficial, CCL, MEP, Riesgo País) ---
 
 app.get('/api/cotizaciones', async (req, res) => {

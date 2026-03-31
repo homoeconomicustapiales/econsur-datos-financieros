@@ -612,6 +612,7 @@ function setupTabs() {
   const headerMundo = document.getElementById('header-mundo');
   const headerHipotecarios = document.getElementById('header-hipotecarios');
 
+  const headerBcra = document.getElementById('header-bcra');
   const headerPortfolio = document.getElementById('header-portfolio');
   const headerForo = document.getElementById('header-foro');
 
@@ -628,9 +629,10 @@ function setupTabs() {
     document.getElementById('section-mundo').style.display = 'none';
     document.getElementById('tab-portfolio').style.display = 'none';
     document.getElementById('tab-foro').style.display = 'none';
+    document.getElementById('tab-bcra').style.display = 'none';
     if (sectionHome) sectionHome.classList.remove('active');
     document.querySelector('.container').style.display = '';
-    [headerArs, headerSoberanos, headerONs, headerMundo, headerHipotecarios, headerPortfolio, headerForo].forEach(b => b && b.classList.remove('active'));
+    [headerArs, headerSoberanos, headerONs, headerMundo, headerHipotecarios, headerBcra, headerPortfolio, headerForo].forEach(b => b && b.classList.remove('active'));
     hero.style.display = '';
   }
 
@@ -653,6 +655,7 @@ function setupTabs() {
       plazofijo: 'Tasas Plazo Fijo',
       lecaps: 'LECAPs y BONCAPs',
       hipotecarios: 'Hipotecarios UVA',
+      bcra: 'Indicadores BCRA',
       portfolio: 'Mi Portfolio',
       foro: 'Foro'
     };
@@ -771,6 +774,19 @@ function setupTabs() {
     }
   }
 
+  function switchToBcra() {
+    hideAllTabs();
+    headerBcra.classList.add('active');
+    subnav.style.display = 'none';
+    document.getElementById('tab-bcra').style.display = 'block';
+    hero.querySelector('h1').textContent = 'Indicadores BCRA';
+    hero.querySelector('p').textContent = 'Datos oficiales del Banco Central: tasas, inflación, reservas, tipo de cambio y más.';
+    updatePageTitle('bcra');
+    if (!document.getElementById('bcra-list').hasChildNodes()) {
+      loadBcra();
+    }
+  }
+
   function switchToForo(threadId) {
     hideAllTabs();
     headerForo.classList.add('active');
@@ -795,6 +811,7 @@ function setupTabs() {
   if (headerONs) headerONs.addEventListener('click', (e) => { e.preventDefault(); switchToONs(); location.hash = 'ons'; });
   if (headerMundo) headerMundo.addEventListener('click', (e) => { e.preventDefault(); switchToMundo(); location.hash = 'mundo'; });
   if (headerHipotecarios) headerHipotecarios.addEventListener('click', (e) => { e.preventDefault(); switchToHipotecarios(); location.hash = 'hipotecarios'; });
+  if (headerBcra) headerBcra.addEventListener('click', (e) => { e.preventDefault(); switchToBcra(); location.hash = 'bcra'; });
   if (headerPortfolio) headerPortfolio.addEventListener('click', (e) => { e.preventDefault(); switchToPortfolio(); location.hash = 'portfolio'; });
   if (headerForo) headerForo.addEventListener('click', (e) => { e.preventDefault(); switchToForo(); location.hash = 'foro'; });
   window._switchToPortfolio = switchToPortfolio;
@@ -808,6 +825,7 @@ function setupTabs() {
   else if (initialHash === 'lecaps') { switchToArs(); document.querySelector('.subnav-tab[data-tab="lecaps"]')?.click(); }
   else if (initialHash === 'cer') { switchToArs(); document.querySelector('.subnav-tab[data-tab="cer"]')?.click(); }
   else if (initialHash === 'hipotecarios') switchToHipotecarios();
+  else if (initialHash === 'bcra') switchToBcra();
   else if (initialHash === 'ons') switchToONs();
   else if (initialHash === 'portfolio') switchToPortfolio();
   else if (initialHash === 'foro') switchToForo();
@@ -826,6 +844,7 @@ function setupTabs() {
     else if (h === 'lecaps') { switchToArs(); document.querySelector('.subnav-tab[data-tab="lecaps"]')?.click(); }
     else if (h === 'cer') { switchToArs(); document.querySelector('.subnav-tab[data-tab="cer"]')?.click(); }
     else if (h === 'hipotecarios') switchToHipotecarios();
+    else if (h === 'bcra') switchToBcra();
     else if (h === 'ons') switchToONs();
     else if (h === 'portfolio') switchToPortfolio();
     else if (h === 'mundo') switchToMundo();
@@ -1114,6 +1133,204 @@ const HIPOTECARIO_COLORS = {
   'Grupo Petersen': '#2d2d6e',
   'Banco de Chubut': '#003d6b',
 };
+
+// ─── BCRA ───────────────────────────────────────────────────────────────────
+
+let _bcraData = null;
+let _bcraChart = null;
+
+async function loadBcra() {
+  const container = document.getElementById('bcra-list');
+  container.innerHTML = `<div class="loading"><div class="loading-spinner"></div><p>Cargando datos BCRA...</p></div>`;
+
+  try {
+    const res = await fetch('/api/bcra');
+    if (!res.ok) throw new Error(`Error ${res.status}`);
+    const json = await res.json();
+    const data = json.data || [];
+    _bcraData = data;
+
+    // Group by category
+    const categorias = {};
+    for (const v of data) {
+      if (!categorias[v.categoria]) categorias[v.categoria] = [];
+      categorias[v.categoria].push(v);
+    }
+
+    const catOrder = ['Tasas', 'Inflación', 'Cambiario', 'Monetario', 'Índices'];
+    const catIcons = {
+      'Tasas':    '<path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>',
+      'Inflación':'<polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>',
+      'Cambiario':'<circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>',
+      'Monetario':'<rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>',
+      'Índices':  '<line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>',
+    };
+
+    function fmtValor(v) {
+      if (v.valor === null) return '—';
+      if (v.formato === 'pct') return v.valor.toFixed(2) + '%';
+      if (v.unidad === 'MM USD') return '$' + v.valor.toLocaleString('es-AR', { maximumFractionDigits: 0 }) + ' M';
+      if (v.unidad === 'MM $') return '$' + (v.valor / 1000).toFixed(1) + ' B';
+      return v.valor.toLocaleString('es-AR', { maximumFractionDigits: 4 });
+    }
+
+    function fmtDelta(v) {
+      if (v.valor === null || v.valorAnterior === null) return '';
+      const delta = v.valor - v.valorAnterior;
+      const pct = v.valorAnterior !== 0 ? (delta / Math.abs(v.valorAnterior)) * 100 : 0;
+      const sign = delta >= 0 ? '+' : '';
+      const color = delta >= 0 ? 'var(--green)' : 'var(--red)';
+      const arrow = delta >= 0 ? '▲' : '▼';
+      if (v.formato === 'pct') {
+        return `<span style="color:${color};font-size:0.75rem">${arrow} ${sign}${delta.toFixed(2)} pp</span>`;
+      }
+      return `<span style="color:${color};font-size:0.75rem">${arrow} ${sign}${pct.toFixed(1)}%</span>`;
+    }
+
+    function fmtFecha(f) {
+      if (!f) return '';
+      const [y, m, d] = f.split('-');
+      return `${d}/${m}/${y}`;
+    }
+
+    let html = '';
+    const orderedCats = catOrder.filter(c => categorias[c]);
+    for (const cat of orderedCats) {
+      const icon = catIcons[cat] || '';
+      html += `<div class="bcra-category">
+        <h3 class="bcra-cat-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${icon}</svg>
+          ${cat}
+        </h3>
+        <div class="bcra-cards">`;
+      for (const v of categorias[cat]) {
+        const isNull = v.valor === null;
+        html += `
+          <div class="bcra-card" data-id="${v.id}" data-key="${v.key}" title="Ver histórico">
+            <div class="bcra-card-nombre">${v.nombre}</div>
+            <div class="bcra-card-valor ${isNull ? 'bcra-null' : ''}">${fmtValor(v)}</div>
+            <div class="bcra-card-meta">
+              ${fmtDelta(v)}
+              <span class="bcra-card-fecha">${fmtFecha(v.fecha)}</span>
+            </div>
+            ${v.unidad ? `<div class="bcra-card-unidad">${v.unidad}</div>` : ''}
+          </div>`;
+      }
+      html += `</div></div>`;
+    }
+
+    container.innerHTML = html;
+
+    // Populate chart selector
+    const selector = document.getElementById('bcra-chart-selector');
+    if (selector) {
+      selector.innerHTML = '<option value="">Elegí una variable...</option>';
+      for (const v of data) {
+        if (v.valor !== null) {
+          const opt = document.createElement('option');
+          opt.value = v.id;
+          opt.textContent = v.nombre;
+          selector.appendChild(opt);
+        }
+      }
+      selector.addEventListener('change', () => { if (selector.value) loadBcraChart(parseInt(selector.value)); });
+      document.getElementById('bcra-chart-range')?.addEventListener('change', () => {
+        if (selector.value) loadBcraChart(parseInt(selector.value));
+      });
+    }
+
+    // Click on card → select in chart
+    container.querySelectorAll('.bcra-card').forEach(card => {
+      card.addEventListener('click', () => {
+        const id = card.dataset.id;
+        if (selector) {
+          selector.value = id;
+          loadBcraChart(parseInt(id));
+          document.getElementById('bcra-chart')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      });
+    });
+
+  } catch (err) {
+    container.innerHTML = `<p style="color:var(--red);padding:20px">Error cargando datos del BCRA: ${err.message}</p>`;
+  }
+}
+
+async function loadBcraChart(idVariable) {
+  const canvas = document.getElementById('bcra-chart');
+  if (!canvas) return;
+  const days = parseInt(document.getElementById('bcra-chart-range')?.value || '90', 10);
+  const hasta = new Date().toISOString().split('T')[0];
+  const desdeDate = new Date();
+  desdeDate.setDate(desdeDate.getDate() - days);
+  const desde = desdeDate.toISOString().split('T')[0];
+
+  // Find variable name
+  const varDef = _bcraData?.find(v => v.id === idVariable);
+  const label = varDef?.nombre || `Variable ${idVariable}`;
+
+  try {
+    canvas.style.opacity = '0.4';
+    const res = await fetch(`/api/bcra?variable=${idVariable}&desde=${desde}&hasta=${hasta}`);
+    if (!res.ok) throw new Error(`Error ${res.status}`);
+    const json = await res.json();
+    const results = (json.results || []).reverse(); // oldest first
+    canvas.style.opacity = '1';
+
+    const labels = results.map(r => {
+      const [y, m, d] = r.fecha.split('-');
+      return `${d}/${m}`;
+    });
+    const values = results.map(r => r.valor);
+
+    if (_bcraChart) _bcraChart.destroy();
+    const ctx = canvas.getContext('2d');
+    const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#00c853';
+    _bcraChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [{
+          label,
+          data: values,
+          borderColor: accent,
+          backgroundColor: accent + '1a',
+          borderWidth: 2,
+          pointRadius: results.length > 60 ? 0 : 2,
+          pointHoverRadius: 4,
+          fill: true,
+          tension: 0.3,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: ctx => {
+                const v = ctx.parsed.y;
+                if (!varDef) return v;
+                if (varDef.formato === 'pct') return `${v.toFixed(2)}%`;
+                return v.toLocaleString('es-AR', { maximumFractionDigits: 4 }) + (varDef.unidad ? ' ' + varDef.unidad : '');
+              }
+            }
+          }
+        },
+        scales: {
+          x: { ticks: { maxTicksLimit: 8, color: 'var(--text-secondary)' }, grid: { color: 'var(--border)' } },
+          y: { ticks: { color: 'var(--text-secondary)' }, grid: { color: 'var(--border)' } }
+        }
+      }
+    });
+  } catch (err) {
+    canvas.style.opacity = '1';
+    console.error('BCRA chart error:', err);
+  }
+}
+
+// ─── Hipotecarios ────────────────────────────────────────────────────────────
 
 async function loadHipotecarios() {
   const container = document.getElementById('hipotecarios-list');
