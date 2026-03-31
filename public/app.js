@@ -1285,7 +1285,7 @@ async function loadBcraChart(idVariable) {
 
     const labels = results.map(r => {
       const [y, m, d] = r.fecha.split('-');
-      return `${d}/${m}`;
+      return `${d}/${m}/${y.slice(2)}`;
     });
     const values = results.map(r => r.valor);
 
