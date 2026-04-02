@@ -617,6 +617,7 @@ function setupTabs() {
   const headerMundial = document.getElementById('header-mundial');
   const headerPortfolio = document.getElementById('header-portfolio');
   const headerForo = document.getElementById('header-foro');
+  const headerPix = document.getElementById('header-pix');
 
   const sectionHome = document.getElementById('section-home');
 
@@ -632,11 +633,12 @@ function setupTabs() {
     document.getElementById('tab-portfolio').style.display = 'none';
     document.getElementById('tab-foro').style.display = 'none';
     document.getElementById('tab-dolar').style.display = 'none';
+    document.getElementById('tab-pix').style.display = 'none';
     document.getElementById('tab-bcra').style.display = 'none';
     document.getElementById('tab-mundial').style.display = 'none';
     if (sectionHome) sectionHome.classList.remove('active');
     document.querySelector('.container').style.display = '';
-    [headerArs, headerSoberanos, headerONs, headerMundo, headerHipotecarios, headerDolar, headerBcra, headerMundial, headerPortfolio, headerForo].forEach(b => b && b.classList.remove('active'));
+    [headerArs, headerSoberanos, headerONs, headerMundo, headerHipotecarios, headerDolar, headerPix, headerBcra, headerMundial, headerPortfolio, headerForo].forEach(b => b && b.classList.remove('active'));
     hero.style.display = '';
   }
 
@@ -661,6 +663,7 @@ function setupTabs() {
       hipotecarios: 'Hipotecarios UVA',
       bcra: 'Indicadores BCRA',
       dolar: 'Dolar',
+      pix: 'PIX Brasil',
       portfolio: 'Mi Portfolio',
       mundial: 'Mundial 2026',
       foro: 'Foro'
@@ -821,6 +824,19 @@ function setupTabs() {
     }
   }
 
+  function switchToPix() {
+    hideAllTabs();
+    headerPix.classList.add('active');
+    subnav.style.display = 'none';
+    document.getElementById('tab-pix').style.display = 'block';
+    hero.querySelector('h1').textContent = 'PIX';
+    hero.querySelector('p').textContent = 'Compara el precio del Real brasileno (BRL) en las principales apps de Argentina.';
+    updatePageTitle('pix');
+    if (!document.getElementById('pix-exchanges').hasChildNodes()) {
+      loadPix();
+    }
+  }
+
   function switchToMundial() {
     hideAllTabs();
     headerMundial.classList.add('active');
@@ -844,6 +860,7 @@ function setupTabs() {
   if (headerMundo) headerMundo.addEventListener('click', (e) => { e.preventDefault(); switchToMundo(); location.hash = 'mundo'; });
   if (headerHipotecarios) headerHipotecarios.addEventListener('click', (e) => { e.preventDefault(); switchToHipotecarios(); location.hash = 'hipotecarios'; });
   if (headerDolar) headerDolar.addEventListener('click', (e) => { e.preventDefault(); switchToDolar(); location.hash = 'dolar'; });
+  if (headerPix) headerPix.addEventListener('click', (e) => { e.preventDefault(); switchToPix(); location.hash = 'pix'; });
   if (headerBcra) headerBcra.addEventListener('click', (e) => { e.preventDefault(); switchToBcra(); location.hash = 'bcra'; });
   if (headerMundial) headerMundial.addEventListener('click', (e) => { e.preventDefault(); switchToMundial(); location.hash = 'mundial'; });
   if (headerPortfolio) headerPortfolio.addEventListener('click', (e) => { e.preventDefault(); switchToPortfolio(); location.hash = 'portfolio'; });
@@ -860,6 +877,7 @@ function setupTabs() {
   else if (initialHash === 'cer') { switchToArs(); document.querySelector('.subnav-tab[data-tab="cer"]')?.click(); }
   else if (initialHash === 'hipotecarios') switchToHipotecarios();
   else if (initialHash === 'dolar') switchToDolar();
+  else if (initialHash === 'pix') switchToPix();
   else if (initialHash === 'bcra') switchToBcra();
   else if (initialHash === 'ons') switchToONs();
   else if (initialHash === 'mundial') switchToMundial();
@@ -881,6 +899,7 @@ function setupTabs() {
     else if (h === 'cer') { switchToArs(); document.querySelector('.subnav-tab[data-tab="cer"]')?.click(); }
     else if (h === 'hipotecarios') switchToHipotecarios();
     else if (h === 'dolar') switchToDolar();
+    else if (h === 'pix') switchToPix();
     else if (h === 'bcra') switchToBcra();
     else if (h === 'ons') switchToONs();
     else if (h === 'mundial') switchToMundial();
@@ -2491,16 +2510,17 @@ async function loadHotMovers() {
       card.className = 'hot-card';
       card.style.cursor = 'pointer';
       card.addEventListener('click', () => openMundoDetail(item.symbol.toLowerCase(), item.name, '', item.symbol));
+      const logoUrl = `https://img.logo.dev/ticker/${item.symbol}?token=pk_SHVx2TGVT6Ksh0M-WPaRvw&size=64&format=png`;
       card.innerHTML = `
-        <div class="hot-rank">${i + 1}</div>
+        <img class="hot-logo" src="${logoUrl}" alt="${item.symbol}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+        <div class="hot-logo-fallback" style="display:none">${item.symbol.slice(0,2)}</div>
         <div class="hot-info">
           <div class="hot-symbol">${item.symbol}</div>
           <div class="hot-name">${item.name}</div>
         </div>
-        <div class="hot-price">$${item.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-        <div class="hot-change" style="color:${changeColor}">
-          <span class="hot-arrow">${arrow}</span>
-          <span>${sign}${item.change.toFixed(2)}%</span>
+        <div class="hot-right">
+          <div class="hot-price">$${item.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+          <div class="hot-change" style="color:${changeColor}">${sign}${item.change.toFixed(2)}%</div>
         </div>
       `;
       grid.appendChild(card);
@@ -4706,43 +4726,44 @@ function openNewThreadModal() {
 
 // ─── Dolar ───
 // Logo map for dolar exchanges — images from criptos.com.ar + local
-// Map exchange IDs to ENTITY_LOGOS keys or file paths
+// Exchange logos — SVGs from icons.com.ar + ENTITY_LOGOS + initials fallback
+const DOLAR_LOGO_FILE = {
+  belo: '/logos/exchanges/belo.svg',
+  buenbit: '/logos/exchanges/buenbit.svg',
+  cocos: '/logos/exchanges/cocos.svg',
+  cocoscapital: '/logos/exchanges/cocos.svg',
+  cocoscrypto: '/logos/exchanges/cocoscrypto.svg',
+  dolarapp: '/logos/exchanges/dolarapp.svg',
+  fiwind: '/logos/exchanges/fiwind.svg',
+  lemon: '/logos/exchanges/lemon.svg',
+  lemoncash: '/logos/exchanges/lemon.svg',
+  letsbit: '/logos/exchanges/letsbit.svg',
+  pluscrypto: '/logos/exchanges/pluscrypto.svg',
+  ripio: '/logos/exchanges/ripio.svg',
+  ripioexchange: '/logos/exchanges/ripio.svg',
+  satoshitango: '/logos/exchanges/satoshitango.svg',
+  wallbit: '/logos/exchanges/wallbit.svg',
+};
 const DOLAR_LOGO_ENTITY = {
-  fiwind: 'Fiwind', belo: 'Belo', cocoscapital: 'Cocos', cocoscrypto: 'Cocos',
   lbfinanzas: 'LB Finanzas',
 };
-const DOLAR_LOGO_FILE = {
-  uala: '/logos/Uala.svg',
-};
 const DOLAR_LOGO_INITIALS = {
-  buenbit: { t: 'BB', bg: '#00b4d8' },
-  ripio: { t: 'RI', bg: '#21bf73' },
-  ripioexchange: { t: 'RI', bg: '#21bf73' },
-  satoshitango: { t: 'ST', bg: '#ff6b00' },
-  lemoncash: { t: 'LM', bg: '#ffe000', c: '#000' },
   binance: { t: 'BN', bg: '#f0b90b', c: '#000' },
   bybit: { t: 'BY', bg: '#f7a600', c: '#000' },
   decrypto: { t: 'DC', bg: '#1a1a2e' },
-  saldo: { t: 'SA', bg: '#10b981' },
-  pluscrypto: { t: 'P+', bg: '#7c3aed' },
   tiendacrypto: { t: 'TC', bg: '#2563eb' },
-  wallbit: { t: 'WB', bg: '#111827' },
-  dolarapp: { t: 'DA', bg: '#22c55e' },
   bitsoalpha: { t: 'BT', bg: '#00d4aa' },
-  letsbit: { t: 'LB', bg: '#6c63ff' },
   vibrant: { t: 'VB', bg: '#6366f1' },
   peanut: { t: 'PN', bg: '#f97316' },
   cryptomkt: { t: 'CM', bg: '#2563eb' },
   p2pme: { t: 'P2', bg: '#3b82f6' },
+  saldo: { t: 'SA', bg: '#10b981' },
 };
 function getDolarExchangeLogo(id, name) {
-  // Try ENTITY_LOGOS (base64 SVGs)
-  const entityKey = DOLAR_LOGO_ENTITY[id];
-  if (entityKey && ENTITY_LOGOS[entityKey]) return `<img src="${ENTITY_LOGOS[entityKey]}" alt="${name}" style="width:24px;height:24px;border-radius:6px;object-fit:contain;">`;
-  // Try file-based logos
   const file = DOLAR_LOGO_FILE[id];
   if (file) return `<img src="${file}" alt="${name}" style="width:24px;height:24px;border-radius:6px;object-fit:contain;">`;
-  // Initials with brand color
+  const entityKey = DOLAR_LOGO_ENTITY[id];
+  if (entityKey && ENTITY_LOGOS[entityKey]) return `<img src="${ENTITY_LOGOS[entityKey]}" alt="${name}" style="width:24px;height:24px;border-radius:6px;object-fit:contain;">`;
   const ini = DOLAR_LOGO_INITIALS[id];
   if (ini) return `<div class="dolar-tipo-icon" style="background:${ini.bg};${ini.c ? 'color:' + ini.c : ''}">${ini.t}</div>`;
   return `<div class="dolar-tipo-icon" style="background:#6b7280">${(name || '').slice(0, 2).toUpperCase()}</div>`;
@@ -4838,8 +4859,8 @@ async function loadDolar() {
           <thead>
             <tr>
               <th>Proveedor</th>
-              <th class="col-right">Venta</th>
-              <th class="col-right">Compra</th>
+              <th class="col-right">Vendés a</th>
+              <th class="col-right">Comprás a</th>
               <th class="col-right">Spread</th>
             </tr>
           </thead>
@@ -4872,11 +4893,135 @@ async function loadDolar() {
     // Source
     const updTime = new Date(updated);
     const timeStr = updTime.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
-    sourceEl.textContent = `Fuentes: DolarAPI, CriptoYa — Actualizado ${timeStr}`;
+    sourceEl.textContent = `Fuentes: CriptoYa, Criptos.com.ar — Actualizado ${timeStr}`;
 
   } catch (err) {
     console.error('Dolar load error:', err);
     tiposEl.innerHTML = '<div class="loading">No se pudieron cargar las cotizaciones del dolar.</div>';
+  }
+}
+
+// ─── PIX (comparapix.ar) ───
+const PIX_API = 'https://api.comparapix.ar/quotes';
+const PIX_CACHE_KEY = 'pix-quotes-cache';
+const PIX_CACHE_TTL = 5 * 60 * 1000;
+
+function formatPixName(key) {
+  return key.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+}
+
+async function loadPix() {
+  const bestEl = document.getElementById('pix-best');
+  const exchangesEl = document.getElementById('pix-exchanges');
+  const sourceEl = document.getElementById('pix-source');
+
+  exchangesEl.innerHTML = '<div class="loading"><div class="loading-spinner"></div><p>Cargando cotizaciones PIX...</p></div>';
+
+  try {
+    // Check cache
+    let data;
+    try {
+      const raw = localStorage.getItem(PIX_CACHE_KEY);
+      if (raw) {
+        const { d, ts } = JSON.parse(raw);
+        if (Date.now() - ts < PIX_CACHE_TTL) data = d;
+      }
+    } catch {}
+
+    if (!data) {
+      const res = await fetch(PIX_API);
+      if (!res.ok) throw new Error(`API error: ${res.status}`);
+      data = await res.json();
+      localStorage.setItem(PIX_CACHE_KEY, JSON.stringify({ d: data, ts: Date.now() }));
+    }
+
+    // Parse providers
+    const providers = [];
+    for (const [key, info] of Object.entries(data)) {
+      if (!info.isPix) continue;
+      const brlArs = info.quotes.find(q => q.symbol === 'BRLARS');
+      if (!brlArs || !brlArs.buy) continue;
+      providers.push({
+        id: key,
+        name: formatPixName(key),
+        price: brlArs.buy,
+        sell: brlArs.sell || null,
+        spread: brlArs.spread_pct || null,
+        logo: info.logo,
+        url: info.url,
+        hasFees: info.hasFees || false,
+      });
+    }
+    providers.sort((a, b) => a.price - b.price);
+
+    if (!providers.length) {
+      exchangesEl.innerHTML = '<div class="loading">No se encontraron cotizaciones PIX.</div>';
+      return;
+    }
+
+    const best = providers[0];
+    const worst = providers[providers.length - 1];
+    const bestSpread = providers.filter(p => p.spread).sort((a, b) => a.spread - b.spread)[0];
+
+    // Best cards
+    bestEl.innerHTML = `
+      <div class="dolar-best-card best-buy">
+        <div class="dolar-best-label">Mejor precio</div>
+        <div class="dolar-best-exchange"><img src="${best.logo}" alt="${best.name}" style="width:20px;height:20px;border-radius:4px;vertical-align:middle;margin-right:4px"> ${best.name}</div>
+        <div class="dolar-best-price">$${best.price.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+      </div>
+      <div class="dolar-best-card best-sell">
+        <div class="dolar-best-label">Peor precio</div>
+        <div class="dolar-best-exchange"><img src="${worst.logo}" alt="${worst.name}" style="width:20px;height:20px;border-radius:4px;vertical-align:middle;margin-right:4px"> ${worst.name}</div>
+        <div class="dolar-best-price">$${worst.price.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+      </div>
+      ${bestSpread ? `<div class="dolar-best-card dolar-spread-card">
+        <div class="dolar-best-label" style="color:var(--yellow)">Menor spread</div>
+        <div class="dolar-best-exchange"><img src="${bestSpread.logo}" alt="${bestSpread.name}" style="width:20px;height:20px;border-radius:4px;vertical-align:middle;margin-right:4px"> ${bestSpread.name}</div>
+        <div class="dolar-best-price">${bestSpread.spread.toFixed(1)}%</div>
+      </div>` : ''}`;
+
+    // Exchange table
+    const rows = providers.map((p, i) => {
+      const rank = i + 1;
+      const rankClass = rank <= 3 ? `rank-${rank}` : 'rank-other';
+      const diff = p.price - best.price;
+      const diffStr = diff > 0 ? `<span style="color:var(--red);font-size:0.75rem">+$${diff.toFixed(2)}</span>` : '';
+      const spreadStr = p.spread ? `${p.spread.toFixed(1)}%` : '-';
+      const feeBadge = p.hasFees ? ' <span style="font-size:0.65rem;color:var(--red);background:var(--red-bg,rgba(239,68,68,0.1));padding:1px 5px;border-radius:4px;font-weight:600">+FEES</span>' : '';
+      return `<tr>
+        <td><span class="dolar-exchange-name"><span class="dolar-rank ${rankClass}">${rank}</span> <img src="${p.logo}" alt="${p.name}" style="width:24px;height:24px;border-radius:6px;object-fit:contain;vertical-align:middle"> ${p.name}${feeBadge}</span></td>
+        <td class="col-right">$${p.price.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})} ${diffStr}</td>
+        <td class="col-right">${spreadStr}</td>
+        <td class="col-right pix-link-cell"><a href="${p.url}" target="_blank" rel="noopener" class="pix-provider-link">Ir</a></td>
+      </tr>`;
+    }).join('');
+
+    exchangesEl.innerHTML = `
+      <div class="dolar-exchange-section">
+        <div class="dolar-exchange-header">
+          <span class="dolar-exchange-title">Proveedores PIX — BRL/ARS</span>
+          <span style="font-size:0.8rem;color:var(--text-muted)">${providers.length} proveedores</span>
+        </div>
+        <table class="dolar-exchange-table">
+          <thead>
+            <tr>
+              <th>Proveedor</th>
+              <th class="col-right">Precio ARS/BRL</th>
+              <th class="col-right">Spread</th>
+              <th class="col-right"></th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>`;
+
+    const timeStr = new Date().toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
+    sourceEl.textContent = `Fuente: comparapix.ar — Actualizado ${timeStr}`;
+
+  } catch (err) {
+    console.error('PIX load error:', err);
+    exchangesEl.innerHTML = '<div class="loading">No se pudieron cargar las cotizaciones PIX.</div>';
   }
 }
 

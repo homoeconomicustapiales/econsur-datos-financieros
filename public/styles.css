@@ -1684,14 +1684,14 @@ body {
 .hot-card {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px 14px;
+  gap: 12px;
+  padding: 12px 16px;
   background: var(--card-bg);
   border: 1px solid var(--border-light);
   border-radius: var(--radius);
   box-shadow: var(--shadow-sm);
   transition: all 0.2s ease;
-  min-width: 220px;
+  min-width: 260px;
   flex-shrink: 0;
 }
 .hot-card:hover {
@@ -1699,11 +1699,27 @@ body {
   box-shadow: var(--shadow);
   transform: translateY(-1px);
 }
-.hot-rank {
-  font-size: 1.1rem;
-  font-weight: 800;
+.hot-logo {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: var(--border-light);
+}
+.hot-logo-fallback {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--border-light);
   color: var(--text-secondary);
-  min-width: 18px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  text-transform: uppercase;
 }
 .hot-info {
   flex: 1;
@@ -1722,6 +1738,10 @@ body {
   text-overflow: ellipsis;
   max-width: 120px;
 }
+.hot-right {
+  text-align: right;
+  flex-shrink: 0;
+}
 .hot-price {
   font-size: 1rem;
   font-weight: 700;
@@ -1729,16 +1749,8 @@ body {
   font-family: var(--font);
 }
 .hot-change {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
   font-size: 0.85rem;
   font-weight: 600;
-  flex-shrink: 0;
-  min-width: 55px;
-}
-.hot-arrow {
-  font-size: 0.7rem;
 }
 
 /* Soon badge */
@@ -2693,6 +2705,36 @@ body {
   .dolar-tipos-grid { grid-template-columns: repeat(2, 1fr); }
   .dolar-exchange-table { font-size: 0.78rem; }
   .dolar-exchange-table th, .dolar-exchange-table td { padding: 8px 10px; }
+}
+
+/* ─── PIX ─── */
+.pix-best-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 12px;
+  margin-bottom: 24px;
+  align-items: stretch;
+}
+@media (max-width: 640px) {
+  .pix-best-grid { grid-template-columns: 1fr 1fr; }
+  .pix-best-grid .dolar-spread-card { grid-column: 1 / -1; }
+}
+.pix-provider-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  text-decoration: none;
+  transition: background 0.15s, color 0.15s;
+}
+.pix-provider-link:hover {
+  background: var(--accent);
+  color: #fff;
 }
 
 /* ─── Mundial 2026 ─── */

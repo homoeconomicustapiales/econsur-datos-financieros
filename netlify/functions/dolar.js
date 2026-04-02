@@ -21,14 +21,14 @@ function fetchJSON(url) {
 }
 
 const EXCHANGE_WHITELIST = new Set([
-  'buenbit', 'ripio', 'ripioexchange', 'satoshitango', 'fiwind', 'lemoncash',
+  'buenbit', 'ripio', 'satoshitango', 'fiwind', 'lemoncash',
   'belo', 'tiendacrypto', 'binance', 'cocoscrypto', 'bitsoalpha', 'dolarapp',
   'wallbit', 'bybit', 'letsbit', 'cryptomkt', 'pluscrypto', 'vibrant', 'peanut',
   'decrypto', 'saldo', 'p2pme',
 ]);
 
 const EXCHANGE_NAMES = {
-  buenbit: 'Buenbit', ripio: 'Ripio', ripioexchange: 'Ripio Exchange',
+  buenbit: 'Buenbit', ripio: 'Ripio',
   satoshitango: 'SatoshiTango', fiwind: 'Fiwind', lemoncash: 'Lemon',
   belo: 'Belo', tiendacrypto: 'Tienda Crypto', binance: 'Binance',
   cocoscrypto: 'Cocos Crypto', bitsoalpha: 'Bitso', dolarapp: 'Dolar App',
