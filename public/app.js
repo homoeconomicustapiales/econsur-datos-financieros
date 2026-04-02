@@ -4961,8 +4961,6 @@ async function loadPix() {
 
     const best = providers[0];
     const worst = providers[providers.length - 1];
-    const bestSpread = providers.filter(p => p.spread).sort((a, b) => a.spread - b.spread)[0];
-
     // Best cards
     bestEl.innerHTML = `
       <div class="dolar-best-card best-buy">
@@ -4974,12 +4972,7 @@ async function loadPix() {
         <div class="dolar-best-label">Peor precio</div>
         <div class="dolar-best-exchange"><img src="${worst.logo}" alt="${worst.name}" style="width:20px;height:20px;border-radius:4px;vertical-align:middle;margin-right:4px"> ${worst.name}</div>
         <div class="dolar-best-price">$${worst.price.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
-      </div>
-      ${bestSpread ? `<div class="dolar-best-card dolar-spread-card">
-        <div class="dolar-best-label" style="color:var(--yellow)">Menor spread</div>
-        <div class="dolar-best-exchange"><img src="${bestSpread.logo}" alt="${bestSpread.name}" style="width:20px;height:20px;border-radius:4px;vertical-align:middle;margin-right:4px"> ${bestSpread.name}</div>
-        <div class="dolar-best-price">${bestSpread.spread.toFixed(1)}%</div>
-      </div>` : ''}`;
+      </div>`;
 
     // Exchange table
     const rows = providers.map((p, i) => {
