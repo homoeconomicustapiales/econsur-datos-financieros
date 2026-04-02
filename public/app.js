@@ -5010,7 +5010,7 @@ async function loadPix() {
       </div>`;
 
     const timeStr = new Date().toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
-    sourceEl.textContent = `Fuente: comparapix.ar — Actualizado ${timeStr}`;
+    sourceEl.innerHTML = `Fuente: <a href="https://comparapix.ar" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:underline">comparapix.ar</a> — Actualizado ${timeStr}`;
 
   } catch (err) {
     console.error('PIX load error:', err);
