@@ -238,7 +238,7 @@ exports.handler = async (event) => {
     // Call Grok (xAI) API — OpenAI-compatible format
     const reply = await new Promise((resolve, reject) => {
       const payload = JSON.stringify({
-        model: 'grok-3-mini',
+        model: 'grok-2-latest',
         max_tokens: 800,
         messages: [
           { role: 'system', content: systemPrompt },
@@ -261,7 +261,9 @@ exports.handler = async (event) => {
           try {
             if (res.statusCode !== 200) {
               console.error('xAI API error:', res.statusCode, data);
-              return reject(new Error('API error ' + res.statusCode));
+              let errMsg = 'API error ' + res.statusCode;
+              try { errMsg = JSON.parse(data).error?.message || errMsg; } catch(_) {}
+              return reject(new Error(errMsg));
             }
             const json = JSON.parse(data);
             resolve(json.choices[0].message.content);
@@ -280,7 +282,7 @@ exports.handler = async (event) => {
       body: JSON.stringify({ response: reply }),
     };
   } catch (e) {
-    console.error('Chat error:', e);
-    return { statusCode: 500, headers, body: JSON.stringify({ error: 'Error interno del asistente' }) };
+    console.error('Chat error:', e.message);
+    return { statusCode: 500, headers, body: JSON.stringify({ error: e.message || 'Error interno del asistente' }) };
   }
 };
