@@ -514,8 +514,6 @@ function setupTabs() {
   const headerSoberanos = document.getElementById('header-soberanos');
   const headerONs = document.getElementById('header-ons');
   const headerMundo = document.getElementById('header-mundo');
-  const headerHipotecarios = document.getElementById('header-hipotecarios');
-
   const headerDolar = document.getElementById('header-dolar');
   const headerBcra = document.getElementById('header-bcra');
   const headerBcraDashboard = document.getElementById('header-bcra-dashboard');
@@ -530,7 +528,6 @@ function setupTabs() {
     hideById('tab-plazofijo');
     hideById('tab-lecaps');
     hideById('tab-cer');
-    hideById('tab-hipotecarios');
     hideById('tab-ons');
     hideById('tab-soberanos');
     hideById('section-mundo');
@@ -538,19 +535,18 @@ function setupTabs() {
     hideById('tab-bcra');
     hideById('tab-bcra-dashboard');
     document.querySelector('.container').style.display = '';
-    [headerArs, headerSoberanos, headerONs, headerMundo, headerHipotecarios, headerDolar, headerBcra, headerBcraDashboard].forEach(b => b && b.classList.remove('active'));
+    [headerArs, headerSoberanos, headerONs, headerMundo, headerDolar, headerBcra, headerBcraDashboard].forEach(b => b && b.classList.remove('active'));
     hero.style.display = '';
   }
 
   function updatePageTitle(section) {
-    const base = 'Rendimientos AR';
+    const base = 'ECONSUR DATOS FINANCIEROS';
     const titles = {
       mundo: 'Monitor Global',
       ars: 'Billeteras y Fondos',
       bonos: 'Bonos Soberanos USD',
       plazofijo: 'Tasas Plazo Fijo',
       lecaps: 'LECAPs y BONCAPs',
-      hipotecarios: 'Hipotecarios UVA',
       bcra: 'Indicadores BCRA',
       'bcra-dashboard': 'Dashboard BCRA',
       dolar: 'Dolar'
@@ -638,19 +634,6 @@ function setupTabs() {
     }
   }
 
-  function switchToHipotecarios() {
-    hideAllTabs();
-    headerHipotecarios.classList.add('active');
-    subnav.style.display = 'none';
-    document.getElementById('tab-hipotecarios').style.display = 'block';
-    hero.querySelector('h1').textContent = 'Créditos Hipotecarios UVA';
-    hero.querySelector('p').textContent = 'Compará tasas y condiciones de préstamos hipotecarios UVA de bancos argentinos.';
-    updatePageTitle('hipotecarios');
-    if (!document.getElementById('hipotecarios-list').hasChildNodes()) {
-      loadHipotecarios();
-    }
-  }
-
   function switchToBcra() {
     hideAllTabs();
     headerBcra.classList.add('active');
@@ -694,7 +677,6 @@ function setupTabs() {
   if (headerSoberanos) headerSoberanos.addEventListener('click', (e) => { e.preventDefault(); switchToSoberanos(); location.hash = 'bonos'; });
   if (headerONs) headerONs.addEventListener('click', (e) => { e.preventDefault(); switchToONs(); location.hash = 'ons'; });
   if (headerMundo) headerMundo.addEventListener('click', (e) => { e.preventDefault(); switchToMundo(); location.hash = 'mundo'; });
-  if (headerHipotecarios) headerHipotecarios.addEventListener('click', (e) => { e.preventDefault(); switchToHipotecarios(); location.hash = 'hipotecarios'; });
   if (headerDolar) headerDolar.addEventListener('click', (e) => { e.preventDefault(); switchToDolar(); location.hash = 'dolar'; });
   if (headerBcra) headerBcra.addEventListener('click', (e) => { e.preventDefault(); switchToBcra(); location.hash = 'bcra'; });
   if (headerBcraDashboard) headerBcraDashboard.addEventListener('click', (e) => { e.preventDefault(); switchToBcraDashboard(); location.hash = 'bcra-dashboard'; });
@@ -707,7 +689,6 @@ function setupTabs() {
   else if (initialHash === 'plazofijo') { switchToArs(); document.querySelector('.subnav-tab[data-tab="plazofijo"]')?.click(); }
   else if (initialHash === 'lecaps') { switchToArs(); document.querySelector('.subnav-tab[data-tab="lecaps"]')?.click(); }
   else if (initialHash === 'cer') { switchToArs(); document.querySelector('.subnav-tab[data-tab="cer"]')?.click(); }
-  else if (initialHash === 'hipotecarios') switchToHipotecarios();
   else if (initialHash === 'dolar') switchToDolar();
   else if (initialHash === 'bcra') switchToBcra();
   else if (initialHash === 'bcra-dashboard') switchToBcraDashboard();
@@ -726,7 +707,6 @@ function setupTabs() {
     else if (h === 'plazofijo') { switchToArs(); document.querySelector('.subnav-tab[data-tab="plazofijo"]')?.click(); }
     else if (h === 'lecaps') { switchToArs(); document.querySelector('.subnav-tab[data-tab="lecaps"]')?.click(); }
     else if (h === 'cer') { switchToArs(); document.querySelector('.subnav-tab[data-tab="cer"]')?.click(); }
-    else if (h === 'hipotecarios') switchToHipotecarios();
     else if (h === 'dolar') switchToDolar();
     else if (h === 'bcra') switchToBcra();
     else if (h === 'bcra-dashboard') switchToBcraDashboard();
@@ -1354,16 +1334,16 @@ async function loadBcraDashboard() {
       _bcraDashSelectedIds = data
         .filter(v => defaults.includes(v.key))
         .map(v => v.id)
-        .slice(0, 3);
+        .slice(0, 2);
       if (!_bcraDashSelectedIds.length && data.length) {
-        _bcraDashSelectedIds = data.slice(0, 3).map(v => v.id);
+        _bcraDashSelectedIds = data.slice(0, 2).map(v => v.id);
       }
     }
 
     addBtn.onclick = () => {
       const id = parseInt(selector.value || '0', 10);
       if (!id || _bcraDashSelectedIds.includes(id)) return;
-      if (_bcraDashSelectedIds.length >= 5) _bcraDashSelectedIds.shift();
+      if (_bcraDashSelectedIds.length >= 2) _bcraDashSelectedIds.shift();
       _bcraDashSelectedIds.push(id);
       renderBcraDashSelectedChips();
       loadBcraDashboardChart();
@@ -1377,7 +1357,7 @@ async function loadBcraDashboard() {
         if (_bcraDashSelectedIds.includes(id)) {
           _bcraDashSelectedIds = _bcraDashSelectedIds.filter(x => x !== id);
         } else {
-          if (_bcraDashSelectedIds.length >= 5) _bcraDashSelectedIds.shift();
+          if (_bcraDashSelectedIds.length >= 2) _bcraDashSelectedIds.shift();
           _bcraDashSelectedIds.push(id);
         }
         renderBcraDashSelectedChips();
@@ -1440,6 +1420,7 @@ async function loadBcraDashboardChart() {
 
   const palette = ['#0b57d0', '#00c980', '#f59e0b', '#8b5cf6', '#ef4444'];
   const series = [];
+  const seriesDefs = [];
 
   responses.forEach((json, idx) => {
     const varId = _bcraDashSelectedIds[idx];
@@ -1454,14 +1435,15 @@ async function loadBcraDashboardChart() {
       series.push({
         name: varDef.nombre,
         data: points,
-        yAxisIndex: idx,
       });
+      seriesDefs.push(varDef);
     }
   });
 
   if (!series.length) return;
 
-  const primaryVar = _bcraDashData.find(v => v.id === _bcraDashSelectedIds[0]);
+  const primaryVar = seriesDefs[0] || _bcraDashData.find(v => v.id === _bcraDashSelectedIds[0]);
+  const secondaryVar = seriesDefs[1] || null;
   const primaryData = series[0].data.map(p => p.y);
   if (primaryVar && primaryData.length) {
     const last = primaryData[primaryData.length - 1];
@@ -1520,27 +1502,37 @@ async function loadBcraDashboardChart() {
       },
       axisBorder: { color: theme.axis },
     },
-    yaxis: _bcraDashSelectedIds.map((varId, idx) => {
-      const varDef = _bcraDashData.find(v => v.id === varId);
-      return {
-        seriesName: varDef?.nombre,
-        opposite: idx > 0 && idx % 2 === 0,
+    yaxis: [
+      {
+        seriesName: series[0]?.name,
+        opposite: false,
         labels: {
           style: { colors: theme.muted, fontSize: '11px' },
           formatter: (val) => {
-            if (varDef?.formato === 'pct') return `${Number(val).toFixed(1)}%`;
+            if (primaryVar?.formato === 'pct') return `${Number(val).toFixed(1)}%`;
             return Number(val).toLocaleString('es-AR');
           },
         },
-      };
-    }),
+      },
+      {
+        seriesName: series[1]?.name,
+        opposite: true,
+        show: !!series[1],
+        labels: {
+          style: { colors: theme.muted, fontSize: '11px' },
+          formatter: (val) => {
+            if (secondaryVar?.formato === 'pct') return `${Number(val).toFixed(1)}%`;
+            return Number(val).toLocaleString('es-AR');
+          },
+        },
+      }
+    ],
     tooltip: {
       theme: theme.isDark ? 'dark' : 'dark',
       x: { format: 'dd/MM/yy' },
       y: {
         formatter: (val, { seriesIndex }) => {
-          const varId = _bcraDashSelectedIds[seriesIndex];
-          const varDef = _bcraDashData.find(v => v.id === varId);
+          const varDef = seriesDefs[seriesIndex] || primaryVar;
           return fmtBcraDashValue(varDef, Number(val));
         },
       },

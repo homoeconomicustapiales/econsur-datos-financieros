@@ -1,6 +1,6 @@
 {
-  "name": "Rendimientos AR",
-  "short_name": "Rendimientos",
+  "name": "ECONSUR DATOS FINANCIEROS",
+  "short_name": "ECONSUR",
   "description": "Compará rendimientos de billeteras, fondos, plazos fijos, LECAPs, CEDEARs y bonos soberanos en Argentina.",
   "start_url": "/",
   "display": "standalone",
