@@ -1454,6 +1454,7 @@ async function loadBcraDashboardChart() {
       series.push({
         name: varDef.nombre,
         data: points,
+        yAxisIndex: idx,
       });
     }
   });
@@ -1519,15 +1520,20 @@ async function loadBcraDashboardChart() {
       },
       axisBorder: { color: theme.axis },
     },
-    yaxis: {
-      labels: {
-        style: { colors: theme.muted, fontSize: '11px' },
-        formatter: (val) => {
-          if (primaryVar?.formato === 'pct') return `${Number(val).toFixed(1)}%`;
-          return Number(val).toLocaleString('es-AR');
+    yaxis: _bcraDashSelectedIds.map((varId, idx) => {
+      const varDef = _bcraDashData.find(v => v.id === varId);
+      return {
+        seriesName: varDef?.nombre,
+        opposite: idx > 0 && idx % 2 === 0,
+        labels: {
+          style: { colors: theme.muted, fontSize: '11px' },
+          formatter: (val) => {
+            if (varDef?.formato === 'pct') return `${Number(val).toFixed(1)}%`;
+            return Number(val).toLocaleString('es-AR');
+          },
         },
-      },
-    },
+      };
+    }),
     tooltip: {
       theme: theme.isDark ? 'dark' : 'dark',
       x: { format: 'dd/MM/yy' },
@@ -1915,6 +1921,38 @@ function renderLecapScatter(items) {
             label: (ctx) => {
               const p = ctx.raw;
               return `TIR ${p.y.toFixed(2)}% • ${p.x} días al vencimiento`;
+                  plugins: {
+                    legend: {
+                      position: 'top',
+                      align: 'start',
+                      labels: {
+                        color: theme.text,
+                        font: { family: "'Inter', sans-serif", size: 12, weight: 600 },
+                        usePointStyle: true,
+                        filter: (item) => item.text !== 'Curva',
+                        padding: 16
+                      }
+                    },
+                    tooltip: {
+                      backgroundColor: theme.tooltipBg,
+                      borderColor: theme.axis,
+                      borderWidth: 1,
+                      titleColor: theme.tooltipText,
+                      bodyColor: theme.tooltipText,
+                      displayColors: false,
+                      padding: 12,
+                      titleFont: { family: "'Inter', sans-serif", size: 13, weight: 600 },
+                      bodyFont: { family: "'Inter', sans-serif", size: 12 },
+                      filter: (item) => item.dataset.label !== 'Curva',
+                      callbacks: {
+                        title: (items) => items?.[0]?.raw?.ticker || 'Instrumento',
+                        label: (ctx) => {
+                          const p = ctx.raw;
+                          return `TIR ${p.y.toFixed(2)}% • ${p.x} días al vencimiento`;
+                        }
+                      }
+                    }
+                  },
             }
           }
         }
@@ -2367,12 +2405,32 @@ function renderYieldCurve(items) {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
-        legend: { labels: { color: textColor, filter: (item) => !item.text.includes('curva') } },
+        legend: {
+          position: 'top',
+          align: 'start',
+          labels: {
+            color: textColor,
+            font: { family: "'Inter', sans-serif", size: 12, weight: 600 },
+            usePointStyle: true,
+            filter: (item) => !item.text.includes('curva'),
+            padding: 16
+          }
+        },
         tooltip: {
+          backgroundColor: 'rgba(0, 0, 0, 0.8)',
+          borderColor: '#444',
+          borderWidth: 1,
+          titleColor: '#fff',
+          bodyColor: '#ddd',
+          displayColors: false,
+          padding: 12,
+          titleFont: { family: "'Inter', sans-serif", size: 13, weight: 600 },
+          bodyFont: { family: "'Inter', sans-serif", size: 12 },
           callbacks: {
+            title: (items) => items?.[0]?.raw?.label || 'Bono',
             label: (ctx) => {
               const d = ctx.raw;
-              return `${d.label || ''}: TIR ${d.y?.toFixed(2) || ctx.parsed.y.toFixed(2)}%`;
+              return `Ley ${ctx.dataset.label.includes('Local') ? 'Local' : 'NY'}: TIR ${d.y?.toFixed(2) || ctx.parsed.y.toFixed(2)}%`;
             }
           }
         }
@@ -3185,7 +3243,13 @@ function renderCERCurve(items) {
         legend: {
           position: 'top',
           align: 'start',
-          labels: { color: theme.text, usePointStyle: true, filter: (item) => !item.text.includes('curva') }
+          labels: {
+            color: theme.text,
+            font: { family: "'Inter', sans-serif", size: 12, weight: 600 },
+            usePointStyle: true,
+            filter: (item) => !item.text.includes('curva'),
+            padding: 16
+          }
         },
         tooltip: {
           backgroundColor: theme.tooltipBg,
@@ -3194,7 +3258,9 @@ function renderCERCurve(items) {
           titleColor: theme.tooltipText,
           bodyColor: theme.tooltipText,
           displayColors: false,
-          padding: 10,
+          padding: 12,
+          titleFont: { family: "'Inter', sans-serif", size: 13, weight: 600 },
+          bodyFont: { family: "'Inter', sans-serif", size: 12 },
           callbacks: {
             title: (items) => items?.[0]?.raw?.label || 'Bono CER',
             label: (ctx) => {
