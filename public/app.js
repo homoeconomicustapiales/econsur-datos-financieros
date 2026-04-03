@@ -656,9 +656,7 @@ function setupTabs() {
     hero.querySelector('h1').textContent = 'BCRA';
     hero.querySelector('p').textContent = 'Datos oficiales del Banco Central: tasas, inflación, reservas, tipo de cambio y más.';
     updatePageTitle('bcra');
-    if (!document.getElementById('bcra-list').querySelector('.bcra-category')) {
-      loadBcra();
-    }
+    loadBcra();
   }
 
   function switchToDolar() {
@@ -1101,10 +1099,11 @@ async function loadBcra() {
           selector.appendChild(opt);
         }
       }
-      selector.addEventListener('change', () => { if (selector.value) loadBcraChart(parseInt(selector.value)); });
-      document.getElementById('bcra-chart-range')?.addEventListener('change', () => {
+      selector.onchange = () => { if (selector.value) loadBcraChart(parseInt(selector.value, 10)); };
+      const rangeEl = document.getElementById('bcra-chart-range');
+      if (rangeEl) rangeEl.onchange = () => {
         if (selector.value) loadBcraChart(parseInt(selector.value));
-      });
+      };
     }
 
     // Click on card → select in chart
