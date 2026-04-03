@@ -1904,7 +1904,8 @@ function renderLecapScatter(items) {
             color: theme.text,
             font: { family: "'Inter', sans-serif", size: 12, weight: 600 },
             usePointStyle: true,
-            filter: (item) => item.text !== 'Curva'
+            filter: (item) => item.text !== 'Curva',
+            padding: 16
           }
         },
         tooltip: {
@@ -1914,45 +1915,15 @@ function renderLecapScatter(items) {
           titleColor: theme.tooltipText,
           bodyColor: theme.tooltipText,
           displayColors: false,
-          padding: 10,
+          padding: 12,
+          titleFont: { family: "'Inter', sans-serif", size: 13, weight: 600 },
+          bodyFont: { family: "'Inter', sans-serif", size: 12 },
           filter: (item) => item.dataset.label !== 'Curva',
           callbacks: {
             title: (items) => items?.[0]?.raw?.ticker || 'Instrumento',
             label: (ctx) => {
               const p = ctx.raw;
               return `TIR ${p.y.toFixed(2)}% • ${p.x} días al vencimiento`;
-                  plugins: {
-                    legend: {
-                      position: 'top',
-                      align: 'start',
-                      labels: {
-                        color: theme.text,
-                        font: { family: "'Inter', sans-serif", size: 12, weight: 600 },
-                        usePointStyle: true,
-                        filter: (item) => item.text !== 'Curva',
-                        padding: 16
-                      }
-                    },
-                    tooltip: {
-                      backgroundColor: theme.tooltipBg,
-                      borderColor: theme.axis,
-                      borderWidth: 1,
-                      titleColor: theme.tooltipText,
-                      bodyColor: theme.tooltipText,
-                      displayColors: false,
-                      padding: 12,
-                      titleFont: { family: "'Inter', sans-serif", size: 13, weight: 600 },
-                      bodyFont: { family: "'Inter', sans-serif", size: 12 },
-                      filter: (item) => item.dataset.label !== 'Curva',
-                      callbacks: {
-                        title: (items) => items?.[0]?.raw?.ticker || 'Instrumento',
-                        label: (ctx) => {
-                          const p = ctx.raw;
-                          return `TIR ${p.y.toFixed(2)}% • ${p.x} días al vencimiento`;
-                        }
-                      }
-                    }
-                  },
             }
           }
         }
