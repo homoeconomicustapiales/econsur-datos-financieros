@@ -708,6 +708,87 @@ body {
   padding: 14px;
 }
 
+.bcra-dash-kpis {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(120px, 1fr));
+  gap: 10px;
+  margin: 10px 0 12px;
+}
+
+.bcra-dash-kpi {
+  background: var(--card-bg);
+  border: 1px solid var(--border-light);
+  border-radius: 12px;
+  padding: 10px 12px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.bcra-dash-kpi-label {
+  font-size: 0.68rem;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 700;
+}
+
+.bcra-dash-kpi-value {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.bcra-dash-kpi-value.is-up { color: var(--green); }
+.bcra-dash-kpi-value.is-down { color: var(--red); }
+
+.bcra-dash-chart-panel {
+  min-height: 460px;
+}
+
+.bcra-dash-quicklist {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.bcra-dash-chip {
+  border: 1px solid var(--border-light);
+  background: var(--card-bg);
+  border-radius: 10px;
+  padding: 9px 10px;
+  box-shadow: var(--shadow-sm);
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.bcra-dash-chip:hover {
+  border-color: var(--accent);
+}
+
+.bcra-dash-chip-name {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bcra-dash-chip-value {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
 #bcra-chart,
 #lecaps-scatter,
 #cer-scatter {
@@ -1628,6 +1709,9 @@ body {
   .lecap-type-badge { font-size: 0.5rem; padding: 1px 4px; margin-left: 4px; }
   .scatter-plot { height: 300px; }
   .historical-chart-panel { min-height: 300px; }
+  .bcra-dash-chart-panel { min-height: 320px; }
+  .bcra-dash-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .bcra-dash-quicklist { grid-template-columns: 1fr; }
   .chart-select { width: 100%; }
   .footer { padding: 24px 16px 40px; }
 }

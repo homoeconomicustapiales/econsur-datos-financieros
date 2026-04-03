@@ -518,6 +518,7 @@ function setupTabs() {
 
   const headerDolar = document.getElementById('header-dolar');
   const headerBcra = document.getElementById('header-bcra');
+  const headerBcraDashboard = document.getElementById('header-bcra-dashboard');
 
   function hideById(id) {
     const el = document.getElementById(id);
@@ -535,8 +536,9 @@ function setupTabs() {
     hideById('section-mundo');
     hideById('tab-dolar');
     hideById('tab-bcra');
+    hideById('tab-bcra-dashboard');
     document.querySelector('.container').style.display = '';
-    [headerArs, headerSoberanos, headerONs, headerMundo, headerHipotecarios, headerDolar, headerBcra].forEach(b => b && b.classList.remove('active'));
+    [headerArs, headerSoberanos, headerONs, headerMundo, headerHipotecarios, headerDolar, headerBcra, headerBcraDashboard].forEach(b => b && b.classList.remove('active'));
     hero.style.display = '';
   }
 
@@ -550,6 +552,7 @@ function setupTabs() {
       lecaps: 'LECAPs y BONCAPs',
       hipotecarios: 'Hipotecarios UVA',
       bcra: 'Indicadores BCRA',
+      'bcra-dashboard': 'Dashboard BCRA',
       dolar: 'Dolar'
     };
     document.title = titles[section] ? `${titles[section]} — ${base}` : base;
@@ -672,6 +675,17 @@ function setupTabs() {
     }
   }
 
+  function switchToBcraDashboard() {
+    hideAllTabs();
+    headerBcraDashboard.classList.add('active');
+    subnav.style.display = 'none';
+    document.getElementById('tab-bcra-dashboard').style.display = 'block';
+    hero.querySelector('h1').textContent = 'Dashboard BCRA';
+    hero.querySelector('p').textContent = 'Serie histórica profesional de variables oficiales del Banco Central con métricas dinámicas.';
+    updatePageTitle('bcra-dashboard');
+    loadBcraDashboard();
+  }
+
   // Logo click → mundo
   const logoEl = document.querySelector('.logo');
   if (logoEl) logoEl.addEventListener('click', (e) => { e.preventDefault(); switchToMundo(); location.hash = ''; });
@@ -683,6 +697,7 @@ function setupTabs() {
   if (headerHipotecarios) headerHipotecarios.addEventListener('click', (e) => { e.preventDefault(); switchToHipotecarios(); location.hash = 'hipotecarios'; });
   if (headerDolar) headerDolar.addEventListener('click', (e) => { e.preventDefault(); switchToDolar(); location.hash = 'dolar'; });
   if (headerBcra) headerBcra.addEventListener('click', (e) => { e.preventDefault(); switchToBcra(); location.hash = 'bcra'; });
+  if (headerBcraDashboard) headerBcraDashboard.addEventListener('click', (e) => { e.preventDefault(); switchToBcraDashboard(); location.hash = 'bcra-dashboard'; });
 
   // Handle initial hash on page load
   const initialHash = location.hash.replace('#', '');
@@ -695,6 +710,7 @@ function setupTabs() {
   else if (initialHash === 'hipotecarios') switchToHipotecarios();
   else if (initialHash === 'dolar') switchToDolar();
   else if (initialHash === 'bcra') switchToBcra();
+  else if (initialHash === 'bcra-dashboard') switchToBcraDashboard();
   else if (initialHash === 'ons') switchToONs();
   else if (initialHash === 'pix' || initialHash === 'mundial' || initialHash === 'portfolio' || initialHash === 'foro' || initialHash.startsWith('foro/')) switchToMundo();
   else switchToMundo();
@@ -713,6 +729,7 @@ function setupTabs() {
     else if (h === 'hipotecarios') switchToHipotecarios();
     else if (h === 'dolar') switchToDolar();
     else if (h === 'bcra') switchToBcra();
+    else if (h === 'bcra-dashboard') switchToBcraDashboard();
     else if (h === 'ons') switchToONs();
     else if (h === 'mundo') switchToMundo();
     else if (h === 'pix' || h === 'mundial' || h === 'portfolio' || h === 'foro' || h.startsWith('foro/')) switchToMundo();
@@ -1021,6 +1038,8 @@ function getHistoricalChartTheme() {
 
 let _bcraData = null;
 let _bcraChart = null;
+let _bcraDashData = [];
+let _bcraDashChart = null;
 
 async function loadBcra() {
   const container = document.getElementById('bcra-list');
@@ -1244,6 +1263,235 @@ async function loadBcraChart(idVariable) {
   } catch (err) {
     canvas.style.opacity = '1';
     console.error('BCRA chart error:', err);
+  }
+}
+
+function fmtBcraDashValue(varDef, value) {
+  if (value == null || Number.isNaN(value)) return '—';
+  if (varDef?.formato === 'pct') return `${value.toFixed(2)}%`;
+  if (varDef?.unidad === 'MM USD') return `$${value.toLocaleString('es-AR', { maximumFractionDigits: 0 })} M`;
+  if (varDef?.unidad === 'MM $') return `$${(value / 1000).toFixed(1)} B`;
+  return value.toLocaleString('es-AR', { maximumFractionDigits: 4 });
+}
+
+function setBcraDashKpiValue(elId, text, trend = '') {
+  const el = document.getElementById(elId);
+  if (!el) return;
+  el.textContent = text;
+  el.classList.remove('is-up', 'is-down');
+  if (trend === 'up') el.classList.add('is-up');
+  if (trend === 'down') el.classList.add('is-down');
+}
+
+async function loadBcraDashboard() {
+  const selector = document.getElementById('bcra-dash-variable');
+  const rangeEl = document.getElementById('bcra-dash-range');
+  const quicklist = document.getElementById('bcra-dash-quicklist');
+  if (!selector || !rangeEl || !quicklist) return;
+
+  try {
+    const currentValue = selector.value;
+    selector.innerHTML = '<option value="">Cargando variables...</option>';
+    quicklist.innerHTML = '';
+
+    const res = await fetch('/api/bcra');
+    if (!res.ok) throw new Error(`Error ${res.status}`);
+    const json = await res.json();
+    const data = (json.data || []).filter(v => v && v.valor != null);
+    _bcraDashData = data;
+
+    selector.innerHTML = '<option value="">Seleccioná una variable...</option>';
+    data.forEach((v) => {
+      const opt = document.createElement('option');
+      opt.value = String(v.id);
+      opt.textContent = `${v.nombre} (${v.categoria})`;
+      selector.appendChild(opt);
+    });
+
+    const featured = data
+      .filter(v => ['Tasas', 'Cambiario', 'Inflación'].includes(v.categoria))
+      .slice(0, 10);
+
+    quicklist.innerHTML = featured.map((v) => `
+      <button class="bcra-dash-chip" data-id="${v.id}">
+        <span class="bcra-dash-chip-name">${v.nombre}</span>
+        <span class="bcra-dash-chip-value">${fmtBcraDashValue(v, v.valor)}</span>
+      </button>
+    `).join('');
+
+    selector.onchange = () => {
+      if (selector.value) loadBcraDashboardChart(parseInt(selector.value, 10));
+    };
+    rangeEl.onchange = () => {
+      if (selector.value) loadBcraDashboardChart(parseInt(selector.value, 10));
+    };
+
+    quicklist.querySelectorAll('.bcra-dash-chip').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const id = btn.getAttribute('data-id');
+        if (!id) return;
+        selector.value = id;
+        loadBcraDashboardChart(parseInt(id, 10));
+      });
+    });
+
+    const defaultId = currentValue || String(data[0]?.id || '');
+    if (defaultId) {
+      selector.value = defaultId;
+      loadBcraDashboardChart(parseInt(defaultId, 10));
+    }
+  } catch (err) {
+    selector.innerHTML = '<option value="">Error cargando variables</option>';
+    quicklist.innerHTML = '<div class="loading">No se pudieron cargar variables del BCRA.</div>';
+    console.error('BCRA dashboard error:', err);
+  }
+}
+
+async function loadBcraDashboardChart(idVariable) {
+  const canvas = document.getElementById('bcra-dash-chart');
+  const rangeEl = document.getElementById('bcra-dash-range');
+  if (!canvas || !rangeEl) return;
+
+  const varDef = _bcraDashData.find(v => v.id === idVariable);
+  if (!varDef) return;
+
+  const theme = getHistoricalChartTheme();
+  const days = parseInt(rangeEl.value || '365', 10);
+  const hasta = new Date().toISOString().split('T')[0];
+
+  let url = `/api/bcra?variable=${idVariable}`;
+  if (days > 0) {
+    const desdeDate = new Date();
+    desdeDate.setDate(desdeDate.getDate() - days);
+    url += `&desde=${desdeDate.toISOString().split('T')[0]}&hasta=${hasta}`;
+  }
+
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`Error ${res.status}`);
+    const json = await res.json();
+    const detalle = json.results?.[0]?.detalle || [];
+    const series = [...detalle].reverse();
+    if (!series.length) return;
+
+    const labels = series.map((r) => {
+      const [y, m, d] = r.fecha.split('-');
+      return `${d}/${m}/${y.slice(2)}`;
+    });
+    const values = series.map(r => Number(r.valor));
+
+    const last = values[values.length - 1];
+    const prev = values.length > 1 ? values[values.length - 2] : last;
+    const change = last - prev;
+    const changePct = prev !== 0 ? (change / Math.abs(prev)) * 100 : 0;
+    const avg = values.reduce((acc, n) => acc + n, 0) / values.length;
+    const max = Math.max(...values);
+    const min = Math.min(...values);
+
+    const deltaText = varDef.formato === 'pct'
+      ? `${change >= 0 ? '+' : ''}${change.toFixed(2)} pp`
+      : `${change >= 0 ? '+' : ''}${changePct.toFixed(2)}%`;
+
+    setBcraDashKpiValue('bcra-kpi-last', fmtBcraDashValue(varDef, last));
+    setBcraDashKpiValue('bcra-kpi-change', deltaText, change >= 0 ? 'up' : 'down');
+    setBcraDashKpiValue('bcra-kpi-avg', fmtBcraDashValue(varDef, avg));
+    setBcraDashKpiValue('bcra-kpi-max', fmtBcraDashValue(varDef, max));
+    setBcraDashKpiValue('bcra-kpi-min', fmtBcraDashValue(varDef, min));
+
+    const ma20 = values.map((_, idx) => {
+      if (idx < 19) return null;
+      let sum = 0;
+      for (let i = idx - 19; i <= idx; i++) sum += values[i];
+      return sum / 20;
+    });
+
+    if (_bcraDashChart) _bcraDashChart.destroy();
+    const ctx = canvas.getContext('2d');
+    const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#0b57d0';
+    const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height || 380);
+    gradient.addColorStop(0, theme.isDark ? 'rgba(11, 87, 208, 0.35)' : 'rgba(11, 87, 208, 0.18)');
+    gradient.addColorStop(1, 'rgba(11, 87, 208, 0.02)');
+
+    _bcraDashChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [
+          {
+            label: varDef.nombre,
+            data: values,
+            borderColor: accent,
+            backgroundColor: gradient,
+            borderWidth: 2.6,
+            pointRadius: values.length > 180 ? 0 : 2,
+            pointHoverRadius: 5,
+            pointHoverBackgroundColor: accent,
+            pointHoverBorderColor: '#fff',
+            pointHoverBorderWidth: 1.4,
+            fill: true,
+            tension: 0.25,
+          },
+          {
+            label: 'Promedio móvil 20',
+            data: ma20,
+            borderColor: theme.blue,
+            borderDash: [6, 4],
+            borderWidth: 1.5,
+            pointRadius: 0,
+            fill: false,
+            tension: 0.2,
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        animation: { duration: 350, easing: 'easeOutQuart' },
+        plugins: {
+          legend: {
+            labels: { color: theme.text, usePointStyle: true, boxWidth: 10 }
+          },
+          tooltip: {
+            backgroundColor: theme.tooltipBg,
+            borderColor: theme.axis,
+            borderWidth: 1,
+            titleColor: theme.tooltipText,
+            bodyColor: theme.tooltipText,
+            padding: 10,
+            callbacks: {
+              title: (items) => items?.[0]?.label ? `Fecha: ${items[0].label}` : '',
+              label: (ctx) => {
+                const v = Number(ctx.parsed.y);
+                if (ctx.dataset.label === 'Promedio móvil 20') {
+                  return `PM20: ${fmtBcraDashValue(varDef, v)}`;
+                }
+                return `${varDef.nombre}: ${fmtBcraDashValue(varDef, v)}`;
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            ticks: { color: theme.muted, maxTicksLimit: 10, font: { size: 11 } },
+            grid: { color: theme.grid, drawTicks: false },
+            border: { color: theme.axis }
+          },
+          y: {
+            ticks: {
+              color: theme.muted,
+              maxTicksLimit: 6,
+              font: { size: 11 },
+              callback: (v) => varDef.formato === 'pct' ? `${Number(v).toFixed(1)}%` : Number(v).toLocaleString('es-AR')
+            },
+            grid: { color: theme.grid },
+            border: { color: theme.axis }
+          }
+        }
+      }
+    });
+  } catch (err) {
+    console.error('BCRA dashboard chart error:', err);
   }
 }
 
