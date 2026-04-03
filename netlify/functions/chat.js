@@ -1,4 +1,4 @@
-// AI Chat assistant powered by Claude Haiku
+// AI Chat assistant powered by Grok (xAI)
 // Fetches live data from internal APIs and uses it as context for Claude
 const https = require('https');
 
@@ -201,7 +201,7 @@ exports.handler = async (event) => {
     return { statusCode: 429, headers, body: JSON.stringify({ error: 'Alcanzaste el límite de 50 consultas por día. Volvé mañana!' }) };
   }
 
-  const apiKey = process.env.ANTHROPIC_API_KEY;
+  const apiKey = process.env.XAI_API_KEY;
   if (!apiKey) {
     return { statusCode: 500, headers, body: JSON.stringify({ error: 'API key not configured' }) };
   }
@@ -235,22 +235,23 @@ exports.handler = async (event) => {
     }
     messages.push({ role: 'user', content: message });
 
-    // Call Claude API
+    // Call Grok (xAI) API — OpenAI-compatible format
     const reply = await new Promise((resolve, reject) => {
       const payload = JSON.stringify({
-        model: 'claude-haiku-4-5-20251001',
+        model: 'grok-3-mini',
         max_tokens: 800,
-        system: systemPrompt,
-        messages,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          ...messages,
+        ],
       });
       const req = https.request({
-        hostname: 'api.anthropic.com',
-        path: '/v1/messages',
+        hostname: 'api.x.ai',
+        path: '/v1/chat/completions',
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-api-key': apiKey,
-          'anthropic-version': '2023-06-01',
+          'Authorization': `Bearer ${apiKey}`,
           'Content-Length': Buffer.byteLength(payload),
         },
       }, res => {
@@ -259,11 +260,11 @@ exports.handler = async (event) => {
         res.on('end', () => {
           try {
             if (res.statusCode !== 200) {
-              console.error('Anthropic API error:', res.statusCode, data);
+              console.error('xAI API error:', res.statusCode, data);
               return reject(new Error('API error ' + res.statusCode));
             }
             const json = JSON.parse(data);
-            resolve(json.content[0].text);
+            resolve(json.choices[0].message.content);
           } catch (e) { reject(e); }
         });
       });
