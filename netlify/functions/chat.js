@@ -1,4 +1,4 @@
-// AI Chat assistant powered by Grok (xAI)
+// AI Chat assistant powered by Google Gemini
 // Fetches live data from internal APIs and uses it as context for Claude
 const https = require('https');
 
@@ -201,7 +201,7 @@ exports.handler = async (event) => {
     return { statusCode: 429, headers, body: JSON.stringify({ error: 'Alcanzaste el límite de 50 consultas por día. Volvé mañana!' }) };
   }
 
-  const apiKey = process.env.XAI_API_KEY;
+  const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     return { statusCode: 500, headers, body: JSON.stringify({ error: 'API key not configured' }) };
   }
@@ -223,35 +223,34 @@ exports.handler = async (event) => {
 
     console.log('System prompt length:', systemPrompt.length);
 
-    // Build messages array
-    const messages = [];
+    // Build Gemini-format contents (history + current message)
+    const contents = [];
     if (Array.isArray(history)) {
-      const recentHistory = history.slice(-6);
-      for (const h of recentHistory) {
+      for (const h of history.slice(-6)) {
         if (h.role === 'user' || h.role === 'assistant') {
-          messages.push({ role: h.role, content: h.content });
+          contents.push({
+            role: h.role === 'assistant' ? 'model' : 'user',
+            parts: [{ text: h.content }],
+          });
         }
       }
     }
-    messages.push({ role: 'user', content: message });
+    contents.push({ role: 'user', parts: [{ text: message }] });
 
-    // Call Grok (xAI) API — OpenAI-compatible format
+    // Call Gemini API
     const reply = await new Promise((resolve, reject) => {
       const payload = JSON.stringify({
-        model: 'grok-2-latest',
-        max_tokens: 800,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          ...messages,
-        ],
+        systemInstruction: { parts: [{ text: systemPrompt }] },
+        generationConfig: { maxOutputTokens: 800 },
+        contents,
       });
+      const path = `/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
       const req = https.request({
-        hostname: 'api.x.ai',
-        path: '/v1/chat/completions',
+        hostname: 'generativelanguage.googleapis.com',
+        path,
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`,
           'Content-Length': Buffer.byteLength(payload),
         },
       }, res => {
@@ -260,13 +259,13 @@ exports.handler = async (event) => {
         res.on('end', () => {
           try {
             if (res.statusCode !== 200) {
-              console.error('xAI API error:', res.statusCode, data);
+              console.error('Gemini API error:', res.statusCode, data);
               let errMsg = 'API error ' + res.statusCode;
               try { errMsg = JSON.parse(data).error?.message || errMsg; } catch(_) {}
               return reject(new Error(errMsg));
             }
             const json = JSON.parse(data);
-            resolve(json.choices[0].message.content);
+            resolve(json.candidates[0].content.parts[0].text);
           } catch (e) { reject(e); }
         });
       });
