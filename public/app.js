@@ -519,8 +519,6 @@ function setupTabs() {
   const headerDolar = document.getElementById('header-dolar');
   const headerBcra = document.getElementById('header-bcra');
 
-  const sectionHome = document.getElementById('section-home');
-
   function hideById(id) {
     const el = document.getElementById(id);
     if (el) el.style.display = 'none';
@@ -537,25 +535,14 @@ function setupTabs() {
     hideById('section-mundo');
     hideById('tab-dolar');
     hideById('tab-bcra');
-    if (sectionHome) sectionHome.classList.remove('active');
     document.querySelector('.container').style.display = '';
     [headerArs, headerSoberanos, headerONs, headerMundo, headerHipotecarios, headerDolar, headerBcra].forEach(b => b && b.classList.remove('active'));
     hero.style.display = '';
   }
 
-  function switchToHome() {
-    hideAllTabs();
-    if (sectionHome) sectionHome.classList.add('active');
-    hero.style.display = 'none';
-    subnav.style.display = 'none';
-    document.querySelector('.container').style.display = 'none';
-    updatePageTitle('home');
-  }
-
   function updatePageTitle(section) {
     const base = 'Rendimientos AR';
     const titles = {
-      home: 'Asistente de Inversiones',
       mundo: 'Monitor Global',
       ars: 'Billeteras y Fondos',
       bonos: 'Bonos Soberanos USD',
@@ -687,9 +674,9 @@ function setupTabs() {
     }
   }
 
-  // Logo click → home
+  // Logo click → mundo
   const logoEl = document.querySelector('.logo');
-  if (logoEl) logoEl.addEventListener('click', (e) => { e.preventDefault(); switchToHome(); location.hash = ''; });
+  if (logoEl) logoEl.addEventListener('click', (e) => { e.preventDefault(); switchToMundo(); location.hash = ''; });
 
   if (headerArs) headerArs.addEventListener('click', (e) => { e.preventDefault(); switchToArs(); location.hash = 'ars'; });
   if (headerSoberanos) headerSoberanos.addEventListener('click', (e) => { e.preventDefault(); switchToSoberanos(); location.hash = 'bonos'; });
@@ -712,7 +699,7 @@ function setupTabs() {
   else if (initialHash === 'bcra') switchToBcra();
   else if (initialHash === 'ons') switchToONs();
   else if (initialHash === 'pix' || initialHash === 'mundial' || initialHash === 'portfolio' || initialHash === 'foro' || initialHash.startsWith('foro/')) switchToMundo();
-  else switchToHome();
+  else switchToMundo();
 
   // Handle back/forward navigation (skip if subnav tab already active)
   let _hashChanging = false;
@@ -731,7 +718,7 @@ function setupTabs() {
     else if (h === 'ons') switchToONs();
     else if (h === 'mundo') switchToMundo();
     else if (h === 'pix' || h === 'mundial' || h === 'portfolio' || h === 'foro' || h.startsWith('foro/')) switchToMundo();
-    else switchToHome();
+    else switchToMundo();
     _hashChanging = false;
   });
 }
@@ -2207,111 +2194,6 @@ function drawSparkline(canvasId, data, isUp) {
   const dot = document.createElement('div');
   dot.className = 'spark-dot';
   dot.style.left = (lastX / w * 100) + '%';
-  dot.style.top = (lastY / h * 100) + '%';
-  dot.style.background = color;
-  dot.style.boxShadow = `0 0 6px ${color}`;
-  parent.appendChild(dot);
-}
-
-async function loadMundo() {
-  const grid = document.getElementById('mundo-grid');
-  grid.innerHTML = `<div class="loading"><div class="loading-spinner"></div><p>Cargando datos globales...</p></div>`;
-
-  try {
-    const res = await fetch('/api/mundo');
-    if (!res.ok) throw new Error(`API error: ${res.status}`);
-    const { data, updated } = await res.json();
-
-    grid.innerHTML = '';
-
-    // Group items by category (preserving API order)
-    const groups = [];
-    const groupMap = {};
-    data.forEach(item => {
-      if (item.price === null) return;
-      const g = item.group || 'Otros';
-      if (!groupMap[g]) { groupMap[g] = []; groups.push(g); }
-      groupMap[g].push(item);
-    });
-
-    // Split groups into two columns for mobile layout
-    const leftGroups = groups.slice(0, Math.ceil(groups.length / 2));
-    const rightGroups = groups.slice(Math.ceil(groups.length / 2));
-
-    const colLeft = document.createElement('div');
-    colLeft.className = 'mundo-col';
-    const colRight = document.createElement('div');
-    colRight.className = 'mundo-col';
-    grid.appendChild(colLeft);
-    grid.appendChild(colRight);
-
-    function renderGroupInto(container, groupName) {
-      const header = document.createElement('div');
-      header.className = 'mundo-group-header';
-      header.textContent = groupName;
-      container.appendChild(header);
-
-      groupMap[groupName].forEach(item => {
-        const isRate = item.group === 'Tasas';
-        const isUp = item.change >= 0;
-        const changeColor = isUp ? 'var(--green)' : 'var(--red)';
-        const arrow = isUp ? '▲' : '▼';
-
-        const isAgro = item.group === 'Agro';
-        let priceStr;
-        if (isRate) {
-          priceStr = item.price.toFixed(3) + '%';
-        } else if (isAgro) {
-          priceStr = item.price.toLocaleString('es-AR', { maximumFractionDigits: 1 }) + ' /Tn';
-        } else if (item.price >= 10000) {
-          priceStr = item.price.toLocaleString('es-AR', { maximumFractionDigits: 0 });
-        } else if (item.price >= 100) {
-          priceStr = item.price.toLocaleString('es-AR', { maximumFractionDigits: 2 });
-        } else {
-          priceStr = item.price.toLocaleString('es-AR', { maximumFractionDigits: 4 });
-        }
-
-        const canvasId = `spark-${item.id}`;
-        const card = document.createElement('div');
-        card.className = 'mundo-card';
-        card.addEventListener('click', () => openMundoDetail(item.id, item.name, item.icon));
-        card.innerHTML = `
-          <div class="mundo-icon">${item.icon}</div>
-          <div class="mundo-info">
-            <div class="mundo-name">${item.name}</div>
-            <div class="mundo-price">${priceStr}</div>
-          </div>
-          <div class="mundo-spark"><canvas id="${canvasId}" width="60" height="24"></canvas></div>
-          <div class="mundo-change" style="color:${changeColor}">
-            <span class="mundo-arrow">${arrow}</span>
-            <span>${Math.abs(item.change).toFixed(2)}%</span>
-          </div>
-        `;
-        container.appendChild(card);
-
-        if (item.sparkline && item.sparkline.length > 1) {
-          drawSparkline(canvasId, item.sparkline, isUp);
-        }
-      });
-    }
-
-    leftGroups.forEach(g => renderGroupInto(colLeft, g));
-    rightGroups.forEach(g => renderGroupInto(colRight, g));
-
-    const src = document.getElementById('mundo-source');
-    if (src) src.textContent = '';
-  } catch (e) {
-    grid.innerHTML = '<div class="loading">Error al cargar datos globales.</div>';
-    console.error('Mundo error:', e);
-  }
-}
-
-// ─── Hot US Movers ───
-
-async function loadHotMovers() {
-  const grid = document.getElementById('hot-grid');
-  if (!grid) return;
-  grid.innerHTML = `<div class="loading"><div class="loading-spinner"></div><p>Cargando movers...</p></div>`;
 
   try {
     const res = await fetch('/api/hot-movers');
