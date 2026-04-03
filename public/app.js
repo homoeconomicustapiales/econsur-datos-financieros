@@ -1000,6 +1000,23 @@ const HIPOTECARIO_COLORS = {
   'Banco de Chubut': '#003d6b',
 };
 
+function getHistoricalChartTheme() {
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  const styles = getComputedStyle(document.documentElement);
+  return {
+    isDark,
+    text: styles.getPropertyValue('--text-secondary').trim() || (isDark ? '#c2c9d6' : '#4f5b6b'),
+    muted: styles.getPropertyValue('--text-tertiary').trim() || (isDark ? '#94a3b8' : '#6b7280'),
+    grid: isDark ? 'rgba(148, 163, 184, 0.16)' : 'rgba(100, 116, 139, 0.18)',
+    axis: isDark ? 'rgba(148, 163, 184, 0.28)' : 'rgba(100, 116, 139, 0.24)',
+    tooltipBg: isDark ? 'rgba(9, 11, 18, 0.94)' : 'rgba(18, 23, 32, 0.92)',
+    tooltipText: '#f8fafc',
+    green: '#00c980',
+    blue: '#3b82f6',
+    amber: '#f59e0b',
+  };
+}
+
 // ─── BCRA ───────────────────────────────────────────────────────────────────
 
 let _bcraData = null;
@@ -1126,6 +1143,7 @@ async function loadBcra() {
 async function loadBcraChart(idVariable) {
   const canvas = document.getElementById('bcra-chart');
   if (!canvas) return;
+  const theme = getHistoricalChartTheme();
   const days = parseInt(document.getElementById('bcra-chart-range')?.value || '365', 10);
   const hasta = new Date().toISOString().split('T')[0];
 
@@ -1167,26 +1185,34 @@ async function loadBcraChart(idVariable) {
           label,
           data: values,
           borderColor: accent,
-          backgroundColor: accent + '1a',
-          borderWidth: 2,
-          pointRadius: results.length > 60 ? 0 : 2,
-          pointHoverRadius: 4,
+          backgroundColor: theme.isDark ? 'rgba(0, 201, 128, 0.18)' : 'rgba(0, 201, 128, 0.10)',
+          borderWidth: 2.4,
+          pointRadius: results.length > 120 ? 0 : 2.4,
+          pointHoverRadius: 5,
+          pointHoverBackgroundColor: accent,
+          pointHoverBorderColor: '#ffffff',
+          pointHoverBorderWidth: 1.5,
           fill: true,
-          tension: 0.3,
+          tension: 0.28,
         }]
       },
       options: {
         responsive: true,
-        maintainAspectRatio: true,
+        maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        animation: { duration: 350, easing: 'easeOutQuart' },
         plugins: {
           legend: { display: false },
           tooltip: {
-            backgroundColor: 'rgba(0,0,0,0.75)',
-            titleColor: '#fff',
-            bodyColor: '#ccc',
-            borderColor: 'rgba(255,255,255,0.1)',
+            backgroundColor: theme.tooltipBg,
+            titleColor: theme.tooltipText,
+            bodyColor: theme.tooltipText,
+            borderColor: theme.axis,
             borderWidth: 1,
+            padding: 10,
+            displayColors: false,
             callbacks: {
+              title: (items) => items?.[0]?.label ? `Fecha: ${items[0].label}` : '',
               label: ctx => {
                 const v = ctx.parsed.y;
                 if (!varDef) return String(v);
@@ -1198,14 +1224,19 @@ async function loadBcraChart(idVariable) {
         },
         scales: {
           x: {
-            ticks: { maxTicksLimit: 8, color: '#888', font: { size: 11 } },
-            grid: { display: false },
-            border: { display: false }
+            ticks: { maxTicksLimit: 8, color: theme.muted, font: { size: 11 } },
+            grid: { color: theme.grid, drawTicks: false },
+            border: { color: theme.axis }
           },
           y: {
-            ticks: { color: '#888', font: { size: 11 }, maxTicksLimit: 6 },
-            grid: { color: 'rgba(128,128,128,0.12)', drawBorder: false },
-            border: { display: false }
+            ticks: {
+              color: theme.muted,
+              font: { size: 11 },
+              maxTicksLimit: 6,
+              callback: (v) => varDef?.formato === 'pct' ? `${Number(v).toFixed(1)}%` : Number(v).toLocaleString('es-AR')
+            },
+            grid: { color: theme.grid, drawBorder: false },
+            border: { color: theme.axis }
           }
         }
       }
@@ -1497,13 +1528,13 @@ async function loadLecaps() {
   }
 }
 
+let lecapScatterChart = null;
 function renderLecapScatter(items) {
   const canvas = document.getElementById('lecaps-scatter');
   if (!canvas || typeof Chart === 'undefined') return;
 
-  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-  const textColor = '#555555';
-  const gridColor = '#1a1a1a';
+  const theme = getHistoricalChartTheme();
+  if (lecapScatterChart) lecapScatterChart.destroy();
 
   const lecapData = items.filter(l => !l.ticker.startsWith('T'));
   const boncapData = items.filter(l => l.ticker.startsWith('T'));
@@ -1512,7 +1543,7 @@ function renderLecapScatter(items) {
   const allPoints = items.map(l => [l.dias, l.tir]).sort((a, b) => a[0] - b[0]);
   const curve = fitPolyCurve(allPoints, 2, 50);
 
-  new Chart(canvas, {
+  lecapScatterChart = new Chart(canvas, {
     type: 'scatter',
     data: {
       datasets: [
@@ -1520,7 +1551,7 @@ function renderLecapScatter(items) {
           label: 'Curva',
           data: curve,
           type: 'line',
-          borderColor: isDark ? 'rgba(160,160,168,0.4)' : 'rgba(0,0,0,0.15)',
+          borderColor: theme.isDark ? 'rgba(203, 213, 225, 0.45)' : 'rgba(71, 85, 105, 0.35)',
           borderWidth: 2,
           borderDash: [6, 3],
           pointRadius: 0,
@@ -1532,19 +1563,21 @@ function renderLecapScatter(items) {
         {
           label: 'LECAP',
           data: lecapData.map(l => ({ x: l.dias, y: l.tir, ticker: l.ticker })),
-          backgroundColor: '#00d26a',
-          borderColor: '#00d26a',
-          pointRadius: 7,
-          pointHoverRadius: 10,
+          backgroundColor: theme.green,
+          borderColor: '#ffffff',
+          borderWidth: 1.5,
+          pointRadius: 6,
+          pointHoverRadius: 9,
           order: 1,
         },
         {
           label: 'BONCAP',
           data: boncapData.map(l => ({ x: l.dias, y: l.tir, ticker: l.ticker })),
-          backgroundColor: '#4da6ff',
-          borderColor: '#4da6ff',
-          pointRadius: 7,
-          pointHoverRadius: 10,
+          backgroundColor: theme.blue,
+          borderColor: '#ffffff',
+          borderWidth: 1.5,
+          pointRadius: 6,
+          pointHoverRadius: 9,
           pointStyle: 'rectRounded',
           order: 1,
         }
@@ -1553,35 +1586,50 @@ function renderLecapScatter(items) {
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      interaction: { mode: 'nearest', intersect: false },
+      animation: { duration: 320, easing: 'easeOutQuart' },
       layout: { padding: { top: 10, right: 20, bottom: 5, left: 5 } },
       plugins: {
         legend: {
+          position: 'top',
+          align: 'start',
           labels: {
-            color: textColor,
-            font: { family: "'Inter', sans-serif", size: 12 },
+            color: theme.text,
+            font: { family: "'Inter', sans-serif", size: 12, weight: 600 },
+            usePointStyle: true,
             filter: (item) => item.text !== 'Curva'
           }
         },
         tooltip: {
+          backgroundColor: theme.tooltipBg,
+          borderColor: theme.axis,
+          borderWidth: 1,
+          titleColor: theme.tooltipText,
+          bodyColor: theme.tooltipText,
+          displayColors: false,
+          padding: 10,
           filter: (item) => item.dataset.label !== 'Curva',
           callbacks: {
+            title: (items) => items?.[0]?.raw?.ticker || 'Instrumento',
             label: (ctx) => {
               const p = ctx.raw;
-              return `${p.ticker}: TIR ${p.y.toFixed(2)}% — ${p.x} días`;
+              return `TIR ${p.y.toFixed(2)}% • ${p.x} días al vencimiento`;
             }
           }
         }
       },
       scales: {
         x: {
-          title: { display: true, text: 'Días al vencimiento', color: textColor, font: { family: "'Inter', sans-serif", size: 12 } },
-          grid: { color: gridColor },
-          ticks: { color: textColor, font: { family: "'Inter', sans-serif" } }
+          title: { display: true, text: 'Días al vencimiento', color: theme.text, font: { family: "'Inter', sans-serif", size: 12, weight: 600 } },
+          grid: { color: theme.grid },
+          border: { color: theme.axis },
+          ticks: { color: theme.muted, font: { family: "'Inter', sans-serif" }, callback: (v) => `${v}d` }
         },
         y: {
-          title: { display: true, text: 'TIR (%)', color: textColor, font: { family: "'Inter', sans-serif", size: 12 } },
-          grid: { color: gridColor },
-          ticks: { color: textColor, font: { family: "'Inter', sans-serif" }, callback: v => v.toFixed(1) + '%' }
+          title: { display: true, text: 'TIR (%)', color: theme.text, font: { family: "'Inter', sans-serif", size: 12, weight: 600 } },
+          grid: { color: theme.grid },
+          border: { color: theme.axis },
+          ticks: { color: theme.muted, font: { family: "'Inter', sans-serif" }, callback: v => Number(v).toFixed(1) + '%' }
         }
       }
     }
@@ -2790,9 +2838,7 @@ function renderCERCurve(items) {
   const canvas = document.getElementById('cer-scatter');
   if (!canvas) return;
   if (cerChart) cerChart.destroy();
-
-  const textColor = '#555555';
-  const gridColor = '#1a1a1a';
+  const theme = getHistoricalChartTheme();
 
   // Polynomial regression curve (degree 2, 300 points for smoothness)
   const points = items.map(i => [i.duration, i.ytm]);
@@ -2804,7 +2850,7 @@ function renderCERCurve(items) {
     datasets.push({
       label: 'Bonos CER (curva)',
       data: curve,
-      borderColor: '#ff9500',
+      borderColor: theme.amber,
       borderWidth: 1.5,
       borderDash: [6, 3],
       pointRadius: 0,
@@ -2817,10 +2863,10 @@ function renderCERCurve(items) {
   datasets.push({
     label: 'Bonos CER',
     data: items.map(i => ({ x: i.duration, y: i.ytm, label: i.symbol })),
-    backgroundColor: '#00d26a',
-    borderColor: '#00d26a',
+    backgroundColor: theme.green,
+    borderColor: '#ffffff',
     borderWidth: 1.5,
-    pointRadius: 7,
+    pointRadius: 6,
     pointHoverRadius: 9,
     showLine: false,
     order: 1,
@@ -2832,13 +2878,27 @@ function renderCERCurve(items) {
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      interaction: { mode: 'nearest', intersect: false },
+      animation: { duration: 320, easing: 'easeOutQuart' },
       plugins: {
-        legend: { labels: { color: textColor, filter: (item) => !item.text.includes('curva') } },
+        legend: {
+          position: 'top',
+          align: 'start',
+          labels: { color: theme.text, usePointStyle: true, filter: (item) => !item.text.includes('curva') }
+        },
         tooltip: {
+          backgroundColor: theme.tooltipBg,
+          borderColor: theme.axis,
+          borderWidth: 1,
+          titleColor: theme.tooltipText,
+          bodyColor: theme.tooltipText,
+          displayColors: false,
+          padding: 10,
           callbacks: {
+            title: (items) => items?.[0]?.raw?.label || 'Bono CER',
             label: (ctx) => {
               const d = ctx.raw;
-              return `${d.label || ''}: TIR Real ${d.y?.toFixed(2) || ctx.parsed.y.toFixed(2)}%`;
+              return `TIR real ${d.y?.toFixed(2) || ctx.parsed.y.toFixed(2)}% • Duration ${Number(d.x || ctx.parsed.x).toFixed(2)} años`;
             }
           }
         }
@@ -2846,14 +2906,16 @@ function renderCERCurve(items) {
       scales: {
         x: {
           type: 'linear',
-          title: { display: true, text: 'Duration (años)', color: textColor },
-          grid: { color: gridColor },
-          ticks: { color: textColor },
+          title: { display: true, text: 'Duration (años)', color: theme.text, font: { size: 12, weight: 600 } },
+          grid: { color: theme.grid },
+          border: { color: theme.axis },
+          ticks: { color: theme.muted, callback: (v) => `${Number(v).toFixed(1)}a` },
         },
         y: {
-          title: { display: true, text: 'TIR Real (%)', color: textColor },
-          grid: { color: gridColor },
-          ticks: { color: textColor },
+          title: { display: true, text: 'TIR real (%)', color: theme.text, font: { size: 12, weight: 600 } },
+          grid: { color: theme.grid },
+          border: { color: theme.axis },
+          ticks: { color: theme.muted, callback: (v) => `${Number(v).toFixed(1)}%` },
         }
       }
     }

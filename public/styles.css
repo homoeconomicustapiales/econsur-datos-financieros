@@ -678,6 +678,43 @@ body {
   height: 420px;
 }
 
+.chart-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.chart-select {
+  appearance: none;
+  -webkit-appearance: none;
+  background: var(--card-bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  box-shadow: var(--shadow-sm);
+}
+
+.chart-select:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.historical-chart-panel {
+  min-height: 420px;
+  padding: 14px;
+}
+
+#bcra-chart,
+#lecaps-scatter,
+#cer-scatter {
+  width: 100% !important;
+  height: 100% !important;
+}
+
 .spread-positive { color: #ef4444; font-weight: 600; }
 .spread-negative { color: var(--green); font-weight: 600; }
 
@@ -1589,7 +1626,9 @@ body {
   .lecap-table th, .soberanos-table th, .cer-table th { padding: 6px 6px; font-size: 0.58rem; }
   .lecap-table td, .soberanos-table td, .cer-table td { padding: 5px 6px; }
   .lecap-type-badge { font-size: 0.5rem; padding: 1px 4px; margin-left: 4px; }
-  .scatter-plot { height: 280px; }
+  .scatter-plot { height: 300px; }
+  .historical-chart-panel { min-height: 300px; }
+  .chart-select { width: 100%; }
   .footer { padding: 24px 16px 40px; }
 }
 
