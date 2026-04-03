@@ -19,10 +19,7 @@ async function initSupabase() {
       if (session) {
         currentUser = session.user;
         updateAuthUI();
-        history.replaceState(null, '', location.pathname + '#portfolio');
-        if (window._switchToPortfolio) window._switchToPortfolio();
-        // Ensure portfolio loads after OAuth redirect
-        setTimeout(() => loadPortfolio(), 100);
+        history.replaceState(null, '', location.pathname + '#ars');
         return;
       }
     }
@@ -31,10 +28,7 @@ async function initSupabase() {
     if (session) {
       currentUser = session.user;
       updateAuthUI(); // handles portfolio-login-prompt / portfolio-content visibility
-      // If user is on portfolio tab, load holdings now that we have the session
-      if (location.hash === '#portfolio') loadPortfolio();
-      // If user is on foro tab, load forum now that supabase is ready
-      if (location.hash === '#foro' || location.hash.startsWith('#foro/')) loadForum();
+      // No-op: portfolio/foro tabs were removed from navigation.
     }
 
     supabaseClient.auth.onAuthStateChange((event, session) => {
@@ -59,7 +53,7 @@ async function loginWithGoogle() {
   if (!supabaseClient) return;
   await supabaseClient.auth.signInWithOAuth({
     provider: 'google',
-    options: { redirectTo: window.location.origin + '/#portfolio' }
+    options: { redirectTo: window.location.origin + '/#ars' }
   });
 }
 
@@ -68,7 +62,6 @@ async function logout() {
   await supabaseClient.auth.signOut();
   currentUser = null;
   updateAuthUI();
-  if (location.hash === '#portfolio') location.hash = 'mundo';
 }
 
 function updateAuthUI() {
@@ -614,31 +607,28 @@ function setupTabs() {
 
   const headerDolar = document.getElementById('header-dolar');
   const headerBcra = document.getElementById('header-bcra');
-  const headerMundial = document.getElementById('header-mundial');
-  const headerPortfolio = document.getElementById('header-portfolio');
-  const headerForo = document.getElementById('header-foro');
-  const headerPix = document.getElementById('header-pix');
 
   const sectionHome = document.getElementById('section-home');
 
+  function hideById(id) {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  }
+
   function hideAllTabs() {
-    document.getElementById('tab-billeteras').style.display = 'none';
-    document.getElementById('tab-plazofijo').style.display = 'none';
-    document.getElementById('tab-lecaps').style.display = 'none';
-    document.getElementById('tab-cer').style.display = 'none';
-    document.getElementById('tab-hipotecarios').style.display = 'none';
-    document.getElementById('tab-ons').style.display = 'none';
-    document.getElementById('tab-soberanos').style.display = 'none';
-    document.getElementById('section-mundo').style.display = 'none';
-    document.getElementById('tab-portfolio').style.display = 'none';
-    document.getElementById('tab-foro').style.display = 'none';
-    document.getElementById('tab-dolar').style.display = 'none';
-    document.getElementById('tab-pix').style.display = 'none';
-    document.getElementById('tab-bcra').style.display = 'none';
-    document.getElementById('tab-mundial').style.display = 'none';
+    hideById('tab-billeteras');
+    hideById('tab-plazofijo');
+    hideById('tab-lecaps');
+    hideById('tab-cer');
+    hideById('tab-hipotecarios');
+    hideById('tab-ons');
+    hideById('tab-soberanos');
+    hideById('section-mundo');
+    hideById('tab-dolar');
+    hideById('tab-bcra');
     if (sectionHome) sectionHome.classList.remove('active');
     document.querySelector('.container').style.display = '';
-    [headerArs, headerSoberanos, headerONs, headerMundo, headerHipotecarios, headerDolar, headerPix, headerBcra, headerMundial, headerPortfolio, headerForo].forEach(b => b && b.classList.remove('active'));
+    [headerArs, headerSoberanos, headerONs, headerMundo, headerHipotecarios, headerDolar, headerBcra].forEach(b => b && b.classList.remove('active'));
     hero.style.display = '';
   }
 
@@ -662,32 +652,9 @@ function setupTabs() {
       lecaps: 'LECAPs y BONCAPs',
       hipotecarios: 'Hipotecarios UVA',
       bcra: 'Indicadores BCRA',
-      dolar: 'Dolar',
-      pix: 'PIX Brasil',
-      portfolio: 'Mi Portfolio',
-      mundial: 'Mundial 2026',
-      foro: 'Foro'
+      dolar: 'Dolar'
     };
     document.title = titles[section] ? `${titles[section]} — ${base}` : base;
-  }
-
-  function switchToPortfolio() {
-    hideAllTabs();
-    headerPortfolio.classList.add('active');
-    subnav.style.display = 'none';
-    document.getElementById('tab-portfolio').style.display = 'block';
-    hero.querySelector('h1').textContent = '';
-    hero.querySelector('p').textContent = '';
-    hero.style.display = 'none';
-    updatePageTitle('portfolio');
-    if (currentUser) {
-      document.getElementById('portfolio-login-prompt').style.display = 'none';
-      document.getElementById('portfolio-content').style.display = '';
-      loadPortfolio();
-    } else {
-      document.getElementById('portfolio-login-prompt').style.display = '';
-      document.getElementById('portfolio-content').style.display = 'none';
-    }
   }
 
   function switchToArs() {
@@ -796,21 +763,6 @@ function setupTabs() {
     }
   }
 
-  function switchToForo(threadId) {
-    hideAllTabs();
-    headerForo.classList.add('active');
-    subnav.style.display = 'none';
-    document.getElementById('tab-foro').style.display = 'block';
-    hero.querySelector('h1').textContent = 'Foro';
-    hero.querySelector('p').textContent = 'Discutí estrategias, compartí ideas y aprendé con la comunidad.';
-    updatePageTitle('foro');
-    if (threadId) {
-      openThread(threadId);
-    } else {
-      loadForum();
-    }
-  }
-
   function switchToDolar() {
     hideAllTabs();
     headerDolar.classList.add('active');
@@ -824,32 +776,6 @@ function setupTabs() {
     }
   }
 
-  function switchToPix() {
-    hideAllTabs();
-    headerPix.classList.add('active');
-    subnav.style.display = 'none';
-    document.getElementById('tab-pix').style.display = 'block';
-    hero.querySelector('h1').textContent = 'PIX';
-    hero.querySelector('p').textContent = 'Compara el precio del Real brasileno (BRL) en las principales apps de Argentina.';
-    updatePageTitle('pix');
-    if (!document.getElementById('pix-exchanges').hasChildNodes()) {
-      loadPix();
-    }
-  }
-
-  function switchToMundial() {
-    hideAllTabs();
-    headerMundial.classList.add('active');
-    subnav.style.display = 'none';
-    document.getElementById('tab-mundial').style.display = 'block';
-    hero.querySelector('h1').textContent = 'Mundial 2026';
-    hero.querySelector('p').textContent = 'FIFA World Cup USA/Mexico/Canada 2026 — Fixture completo, grupos y bracket.';
-    updatePageTitle('mundial');
-    if (!document.getElementById('mundial-groups').hasChildNodes()) {
-      renderMundial();
-    }
-  }
-
   // Logo click → home
   const logoEl = document.querySelector('.logo');
   if (logoEl) logoEl.addEventListener('click', (e) => { e.preventDefault(); switchToHome(); location.hash = ''; });
@@ -860,12 +786,7 @@ function setupTabs() {
   if (headerMundo) headerMundo.addEventListener('click', (e) => { e.preventDefault(); switchToMundo(); location.hash = 'mundo'; });
   if (headerHipotecarios) headerHipotecarios.addEventListener('click', (e) => { e.preventDefault(); switchToHipotecarios(); location.hash = 'hipotecarios'; });
   if (headerDolar) headerDolar.addEventListener('click', (e) => { e.preventDefault(); switchToDolar(); location.hash = 'dolar'; });
-  if (headerPix) headerPix.addEventListener('click', (e) => { e.preventDefault(); switchToPix(); location.hash = 'pix'; });
   if (headerBcra) headerBcra.addEventListener('click', (e) => { e.preventDefault(); switchToBcra(); location.hash = 'bcra'; });
-  if (headerMundial) headerMundial.addEventListener('click', (e) => { e.preventDefault(); switchToMundial(); location.hash = 'mundial'; });
-  if (headerPortfolio) headerPortfolio.addEventListener('click', (e) => { e.preventDefault(); switchToPortfolio(); location.hash = 'portfolio'; });
-  if (headerForo) headerForo.addEventListener('click', (e) => { e.preventDefault(); switchToForo(); location.hash = 'foro'; });
-  window._switchToPortfolio = switchToPortfolio;
 
   // Handle initial hash on page load
   const initialHash = location.hash.replace('#', '');
@@ -877,13 +798,9 @@ function setupTabs() {
   else if (initialHash === 'cer') { switchToArs(); document.querySelector('.subnav-tab[data-tab="cer"]')?.click(); }
   else if (initialHash === 'hipotecarios') switchToHipotecarios();
   else if (initialHash === 'dolar') switchToDolar();
-  else if (initialHash === 'pix') switchToPix();
   else if (initialHash === 'bcra') switchToBcra();
   else if (initialHash === 'ons') switchToONs();
-  else if (initialHash === 'mundial') switchToMundial();
-  else if (initialHash === 'portfolio') switchToPortfolio();
-  else if (initialHash === 'foro') switchToForo();
-  else if (initialHash.startsWith('foro/')) switchToForo(initialHash.split('/')[1]);
+  else if (initialHash === 'pix' || initialHash === 'mundial' || initialHash === 'portfolio' || initialHash === 'foro' || initialHash.startsWith('foro/')) switchToMundo();
   else switchToHome();
 
   // Handle back/forward navigation (skip if subnav tab already active)
@@ -899,14 +816,10 @@ function setupTabs() {
     else if (h === 'cer') { switchToArs(); document.querySelector('.subnav-tab[data-tab="cer"]')?.click(); }
     else if (h === 'hipotecarios') switchToHipotecarios();
     else if (h === 'dolar') switchToDolar();
-    else if (h === 'pix') switchToPix();
     else if (h === 'bcra') switchToBcra();
     else if (h === 'ons') switchToONs();
-    else if (h === 'mundial') switchToMundial();
-    else if (h === 'portfolio') switchToPortfolio();
     else if (h === 'mundo') switchToMundo();
-    else if (h === 'foro') switchToForo();
-    else if (h.startsWith('foro/')) switchToForo(h.split('/')[1]);
+    else if (h === 'pix' || h === 'mundial' || h === 'portfolio' || h === 'foro' || h.startsWith('foro/')) switchToMundo();
     else switchToHome();
     _hashChanging = false;
   });

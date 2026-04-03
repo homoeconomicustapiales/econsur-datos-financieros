@@ -72,20 +72,8 @@
         <a href="#" class="currency-tab" id="header-dolar">
           <span class="flag"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span> Dolar
         </a>
-        <a href="#" class="currency-tab" id="header-pix">
-          <span class="flag"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13.17 2.83l5.66 5.66a4 4 0 0 1 0 5.66l-5.66 5.66a4 4 0 0 1-5.66 0L1.85 14.15a4 4 0 0 1 0-5.66l5.66-5.66a4 4 0 0 1 5.66 0z"/></svg></span> PIX
-        </a>
         <a href="#" class="currency-tab" id="header-bcra">
           <span class="flag"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M20 10v11"/><circle cx="12" cy="15" r="2"/></svg></span> BCRA
-        </a>
-        <a href="#" class="currency-tab" id="header-portfolio">
-          <span class="flag"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg></span> Portfolio
-        </a>
-        <a href="#" class="currency-tab" id="header-mundial">
-          <span class="flag"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2 L14.5 8 L12 14 L9.5 8 Z"/><path d="M2 12 L8 9.5 L14 12 L8 14.5 Z"/><path d="M12 22 L9.5 16 L12 10 L14.5 16 Z"/><path d="M22 12 L16 14.5 L10 12 L16 9.5 Z"/></svg></span> Mundial
-        </a>
-        <a href="#" class="currency-tab" id="header-foro">
-          <span class="flag">💬</span> Foro
         </a>
       </nav>
       <div class="header-right">
@@ -286,15 +274,6 @@
       </section>
     </div>
 
-    <!-- Tab: PIX -->
-    <div id="tab-pix" style="display:none">
-      <section class="section" id="pix-section">
-        <div id="pix-best" class="pix-best-grid"></div>
-        <div id="pix-exchanges"></div>
-        <p class="section-source" id="pix-source"></p>
-      </section>
-    </div>
-
     <!-- Tab: BCRA -->
     <div id="tab-bcra" style="display:none">
       <section class="section">
@@ -319,62 +298,6 @@
           <canvas id="bcra-chart"></canvas>
         </div>
       </section>
-    </div>
-
-    <!-- Tab: Portfolio -->
-    <div id="tab-portfolio" style="display:none">
-      <!-- Unauthenticated -->
-      <div id="portfolio-login-prompt" class="section" style="text-align:center;padding:60px 20px">
-        <div style="margin-bottom:16px"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg></div>
-        <h2 style="margin-bottom:8px">Mi Portfolio</h2>
-        <p style="color:var(--text-secondary);margin-bottom:24px;max-width:400px;margin-left:auto;margin-right:auto">
-          Gestioná tus inversiones, mirá tu tenencia valorizada en vivo y tu calendario de cobros.
-        </p>
-        <button class="portfolio-google-btn" id="portfolio-google-login">
-          <svg width="18" height="18" viewBox="0 0 24 24" style="vertical-align:middle;margin-right:8px"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
-          Iniciar sesión con Google
-        </button>
-      </div>
-      <!-- Authenticated -->
-      <div id="portfolio-content" style="display:none">
-        <section class="section">
-          <div id="portfolio-greeting"></div>
-          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-top:16px">
-            <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-              <h2 style="margin:0">Mi Portfolio</h2>
-              <div id="portfolio-tc-toggle" style="display:flex;gap:1px;background:var(--bg-subtle);border-radius:6px;padding:2px;font-size:0.7rem"></div>
-            </div>
-            <button class="portfolio-add-btn" id="portfolio-add-btn">+ Agregar activo</button>
-          </div>
-          <div id="portfolio-summary"></div>
-          <div id="portfolio-holdings"></div>
-        </section>
-        <section class="section">
-          <h2>Calendario de cobros</h2>
-          <p class="section-desc">Rentas, cupones y amortizaciones futuras de tus bonos</p>
-          <div class="chart-wrapper" id="portfolio-cashflow-chart-wrapper" style="margin-bottom:16px">
-            <canvas id="portfolio-cashflow-chart"></canvas>
-          </div>
-          <div id="portfolio-cashflows"></div>
-        </section>
-      </div>
-    </div>
-
-    <!-- Tab: Mundial -->
-    <div id="tab-mundial" style="display:none">
-      <section class="section" id="mundial-section">
-        <div class="mundial-phase-toggle" id="mundial-phase-toggle">
-          <button class="mundial-phase-btn active" data-phase="groups">Fase de Grupos</button>
-          <button class="mundial-phase-btn" data-phase="bracket">Bracket</button>
-        </div>
-        <div id="mundial-groups"></div>
-        <div id="mundial-bracket" style="display:none"></div>
-      </section>
-    </div>
-
-    <!-- Tab: Foro -->
-    <div id="tab-foro" style="display:none">
-      <div id="foro-content"></div>
     </div>
 
   </main>
