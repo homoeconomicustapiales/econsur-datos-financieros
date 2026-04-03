@@ -2047,111 +2047,6 @@ function renderYieldCurve(items) {
   });
 }
 
-// ─── AI Chat Assistant ───
-(function initChat() {
-  const chatInput = document.getElementById('chat-input');
-  const chatSend = document.getElementById('chat-send');
-  const chatMessages = document.getElementById('chat-messages');
-  const chatSuggestions = document.getElementById('chat-suggestions');
-  if (!chatInput) return;
-
-  let history = [];
-  let isLoading = false;
-
-  // Suggestion buttons
-  chatSuggestions.addEventListener('click', (e) => {
-    const btn = e.target.closest('.chat-suggestion');
-    if (btn) sendMessage(btn.dataset.q);
-  });
-
-  // Send on Enter
-  chatInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      sendMessage(chatInput.value);
-    }
-  });
-
-  chatSend.addEventListener('click', () => sendMessage(chatInput.value));
-
-  function addMessage(role, content) {
-    chatMessages.classList.add('has-messages');
-    const div = document.createElement('div');
-    div.className = `chat-msg ${role}`;
-    const bubble = document.createElement('div');
-    bubble.className = 'chat-msg-bubble';
-    // Simple markdown: **bold**, bullet lists, newlines
-    let html = content
-      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-      .replace(/^- (.+)/gm, '<li>$1</li>')
-      .replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>')
-      .replace(/\n/g, '<br>');
-    bubble.innerHTML = html;
-    div.appendChild(bubble);
-    chatMessages.appendChild(div);
-    chatMessages.scrollTop = chatMessages.scrollHeight;
-  }
-
-  function showTyping() {
-    const div = document.createElement('div');
-    div.className = 'chat-msg assistant';
-    div.id = 'chat-typing';
-    div.innerHTML = `<div class="chat-typing"><div class="chat-typing-dot"></div><div class="chat-typing-dot"></div><div class="chat-typing-dot"></div></div>`;
-    chatMessages.appendChild(div);
-    chatMessages.scrollTop = chatMessages.scrollHeight;
-  }
-
-  function hideTyping() {
-    const el = document.getElementById('chat-typing');
-    if (el) el.remove();
-  }
-
-  async function sendMessage(text) {
-    if (!text || !text.trim() || isLoading) return;
-    text = text.trim();
-    chatInput.value = '';
-
-    // Hide suggestions after first message
-    if (chatSuggestions) chatSuggestions.style.display = 'none';
-
-    addMessage('user', text);
-    history.push({ role: 'user', content: text });
-
-    isLoading = true;
-    chatSend.disabled = true;
-    chatInput.disabled = true;
-    showTyping();
-
-    try {
-      const res = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: text, history: history.slice(-6) }),
-      });
-
-      hideTyping();
-
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        addMessage('assistant', err.error || 'Error al consultar el asistente. Intentá de nuevo.');
-      } else {
-        const data = await res.json();
-        addMessage('assistant', data.response);
-        history.push({ role: 'assistant', content: data.response });
-      }
-    } catch (e) {
-      hideTyping();
-      addMessage('assistant', 'Error de conexión. Intentá de nuevo.');
-    }
-
-    isLoading = false;
-    chatSend.disabled = false;
-    chatInput.disabled = false;
-    chatInput.focus();
-  }
-})();
-
 // ─── Mundo (Global Monitor) ───
 function drawSparkline(canvasId, data, isUp) {
   const canvas = document.getElementById(canvasId);
@@ -2194,6 +2089,111 @@ function drawSparkline(canvasId, data, isUp) {
   const dot = document.createElement('div');
   dot.className = 'spark-dot';
   dot.style.left = (lastX / w * 100) + '%';
+  dot.style.top = (lastY / h * 100) + '%';
+  dot.style.background = color;
+  dot.style.boxShadow = `0 0 6px ${color}`;
+  parent.appendChild(dot);
+}
+
+async function loadMundo() {
+  const grid = document.getElementById('mundo-grid');
+  grid.innerHTML = `<div class="loading"><div class="loading-spinner"></div><p>Cargando datos globales...</p></div>`;
+
+  try {
+    const res = await fetch('/api/mundo');
+    if (!res.ok) throw new Error(`API error: ${res.status}`);
+    const { data, updated } = await res.json();
+
+    grid.innerHTML = '';
+
+    // Group items by category (preserving API order)
+    const groups = [];
+    const groupMap = {};
+    data.forEach(item => {
+      if (item.price === null) return;
+      const g = item.group || 'Otros';
+      if (!groupMap[g]) { groupMap[g] = []; groups.push(g); }
+      groupMap[g].push(item);
+    });
+
+    // Split groups into two columns for mobile layout
+    const leftGroups = groups.slice(0, Math.ceil(groups.length / 2));
+    const rightGroups = groups.slice(Math.ceil(groups.length / 2));
+
+    const colLeft = document.createElement('div');
+    colLeft.className = 'mundo-col';
+    const colRight = document.createElement('div');
+    colRight.className = 'mundo-col';
+    grid.appendChild(colLeft);
+    grid.appendChild(colRight);
+
+    function renderGroupInto(container, groupName) {
+      const header = document.createElement('div');
+      header.className = 'mundo-group-header';
+      header.textContent = groupName;
+      container.appendChild(header);
+
+      groupMap[groupName].forEach(item => {
+        const isRate = item.group === 'Tasas';
+        const isUp = item.change >= 0;
+        const changeColor = isUp ? 'var(--green)' : 'var(--red)';
+        const arrow = isUp ? '▲' : '▼';
+
+        const isAgro = item.group === 'Agro';
+        let priceStr;
+        if (isRate) {
+          priceStr = item.price.toFixed(3) + '%';
+        } else if (isAgro) {
+          priceStr = item.price.toLocaleString('es-AR', { maximumFractionDigits: 1 }) + ' /Tn';
+        } else if (item.price >= 10000) {
+          priceStr = item.price.toLocaleString('es-AR', { maximumFractionDigits: 0 });
+        } else if (item.price >= 100) {
+          priceStr = item.price.toLocaleString('es-AR', { maximumFractionDigits: 2 });
+        } else {
+          priceStr = item.price.toLocaleString('es-AR', { maximumFractionDigits: 4 });
+        }
+
+        const canvasId = `spark-${item.id}`;
+        const card = document.createElement('div');
+        card.className = 'mundo-card';
+        card.addEventListener('click', () => openMundoDetail(item.id, item.name, item.icon));
+        card.innerHTML = `
+          <div class="mundo-icon">${item.icon}</div>
+          <div class="mundo-info">
+            <div class="mundo-name">${item.name}</div>
+            <div class="mundo-price">${priceStr}</div>
+          </div>
+          <div class="mundo-spark"><canvas id="${canvasId}" width="60" height="24"></canvas></div>
+          <div class="mundo-change" style="color:${changeColor}">
+            <span class="mundo-arrow">${arrow}</span>
+            <span>${Math.abs(item.change).toFixed(2)}%</span>
+          </div>
+        `;
+        container.appendChild(card);
+
+        if (item.sparkline && item.sparkline.length > 1) {
+          drawSparkline(canvasId, item.sparkline, isUp);
+        }
+      });
+    }
+
+    leftGroups.forEach(g => renderGroupInto(colLeft, g));
+    rightGroups.forEach(g => renderGroupInto(colRight, g));
+
+    const src = document.getElementById('mundo-source');
+    if (src) src.textContent = '';
+  } catch (e) {
+    grid.innerHTML = '<div class="loading">Error al cargar datos globales.</div>';
+    console.error('Mundo error:', e);
+  }
+}
+
+// ─── Hot US Movers ───
+
+async function loadHotMovers() {
+  const grid = document.getElementById('hot-grid');
+  if (!grid) return;
+  grid.innerHTML = `<div class="loading"><div class="loading-spinner"></div><p>Cargando movers...</p></div>`;
 
   try {
     const res = await fetch('/api/hot-movers');
