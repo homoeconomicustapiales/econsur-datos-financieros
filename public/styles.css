@@ -696,6 +696,7 @@ body {
   font-size: 0.82rem;
   font-weight: 600;
   box-shadow: var(--shadow-sm);
+  cursor: pointer;
 }
 
 .chart-select:focus-visible {
@@ -748,6 +749,63 @@ body {
   min-height: 460px;
 }
 
+.bcra-dash-range {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  background: var(--card-bg);
+}
+
+.bcra-range-btn {
+  border: 0;
+  border-right: 1px solid var(--border-light);
+  background: transparent;
+  color: var(--text-secondary);
+  padding: 8px 10px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.bcra-range-btn:last-child {
+  border-right: 0;
+}
+
+.bcra-range-btn.active {
+  background: var(--accent-light);
+  color: var(--accent);
+}
+
+.bcra-dash-selected {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 6px 0 12px;
+}
+
+.bcra-dash-pill {
+  border: 1px solid var(--border);
+  background: var(--card-bg);
+  color: var(--text);
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.bcra-dash-pill span {
+  color: var(--text-tertiary);
+  margin-left: 6px;
+}
+
+.bcra-dash-empty {
+  font-size: 0.76rem;
+  color: var(--text-tertiary);
+}
+
 .bcra-dash-quicklist {
   margin-top: 12px;
   display: grid;
@@ -774,6 +832,11 @@ body {
   border-color: var(--accent);
 }
 
+.bcra-dash-chip.active {
+  border-color: var(--accent);
+  background: var(--accent-light);
+}
+
 .bcra-dash-chip-name {
   font-size: 0.78rem;
   color: var(--text-secondary);
@@ -791,7 +854,8 @@ body {
 
 #bcra-chart,
 #lecaps-scatter,
-#cer-scatter {
+#cer-scatter,
+#bcra-dash-apex {
   width: 100% !important;
   height: 100% !important;
 }
@@ -1712,6 +1776,8 @@ body {
   .bcra-dash-chart-panel { min-height: 320px; }
   .bcra-dash-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .bcra-dash-quicklist { grid-template-columns: 1fr; }
+  .bcra-dash-range { width: 100%; justify-content: space-between; }
+  .bcra-range-btn { flex: 1; }
   .chart-select { width: 100%; }
   .footer { padding: 24px 16px 40px; }
 }

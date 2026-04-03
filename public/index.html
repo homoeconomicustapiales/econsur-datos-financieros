@@ -280,15 +280,17 @@
           <select id="bcra-dash-variable" class="chart-select">
             <option value="">Seleccioná una variable...</option>
           </select>
-          <select id="bcra-dash-range" class="chart-select">
-            <option value="30">30 días</option>
-            <option value="90">90 días</option>
-            <option value="365" selected>1 año</option>
-            <option value="1825">5 años</option>
-            <option value="3650">10 años</option>
-            <option value="0">Histórico completo</option>
-          </select>
+          <button class="chart-select bcra-dash-add" id="bcra-dash-add" type="button">Agregar serie</button>
+          <div class="bcra-dash-range" id="bcra-dash-range">
+            <button type="button" class="bcra-range-btn" data-days="30">1M</button>
+            <button type="button" class="bcra-range-btn" data-days="90">3M</button>
+            <button type="button" class="bcra-range-btn active" data-days="365">1A</button>
+            <button type="button" class="bcra-range-btn" data-days="1095">3A</button>
+            <button type="button" class="bcra-range-btn" data-days="0">TODO</button>
+          </div>
         </div>
+
+        <div class="bcra-dash-selected" id="bcra-dash-selected"></div>
 
         <div class="bcra-dash-kpis" id="bcra-dash-kpis">
           <div class="bcra-dash-kpi"><span class="bcra-dash-kpi-label">Último</span><span class="bcra-dash-kpi-value" id="bcra-kpi-last">—</span></div>
@@ -299,7 +301,7 @@
         </div>
 
         <div class="chart-wrapper historical-chart-panel bcra-dash-chart-panel">
-          <canvas id="bcra-dash-chart"></canvas>
+          <div id="bcra-dash-apex"></div>
         </div>
 
         <div class="bcra-dash-quicklist" id="bcra-dash-quicklist"></div>
@@ -314,6 +316,7 @@
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
   <script src="/app.js"></script>
   <script>if('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');</script>
 </body>
