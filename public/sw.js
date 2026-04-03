@@ -32,13 +32,21 @@ self.addEventListener('fetch', (event) => {
 
   // API calls: always network, no cache
   if (url.pathname.startsWith('/api/')) {
-    event.respondWith(fetch(event.request));
+    event.respondWith(fetch(event.request).catch(err => {
+      console.error('API fetch failed:', err);
+      return new Response('API unavailable', { status: 503 });
+    }));
     return;
   }
 
   // External resources (Chart.js, Google Fonts): always network, no cache
   if (url.hostname === 'cdn.jsdelivr.net' || url.hostname === 'fonts.googleapis.com' || url.hostname === 'fonts.gstatic.com') {
-    event.respondWith(fetch(event.request));
+    event.respondWith(
+      fetch(event.request).catch(err => {
+        // CSP or network error - return null to let browser handle
+        return new Response(null, { status: 0 });
+      })
+    );
     return;
   }
 
@@ -46,8 +54,11 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(
     fetch(event.request)
       .then(response => {
-        const clone = response.clone();
-        caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+        // Only cache GET requests with successful responses
+        if (event.request.method === 'GET' && response.status === 200) {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+        }
         return response;
       })
       .catch(() => caches.match(event.request))
